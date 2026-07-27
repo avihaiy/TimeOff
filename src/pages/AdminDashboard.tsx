@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useStore, type Role } from '../lib/store';
 import { format } from 'date-fns';
-import { ShieldCheck, UserPlus, XCircle, CheckCircle, Clock, Printer, KeySquare } from 'lucide-react';
+import { ShieldCheck, UserPlus, XCircle, CheckCircle, Clock, Printer, KeySquare, Download } from 'lucide-react';
 import { VacationCalendar } from '../components/VacationCalendar';
+import { getBusinessDaysCount } from '../lib/utils';
 
 export function AdminDashboard() {
   const requests = useStore((state) => state.requests);
@@ -19,6 +20,8 @@ export function AdminDashboard() {
 
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [newPasswordForUser, setNewPasswordForUser] = useState('');
+
+  const [exportMonth, setExportMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
 
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +54,45 @@ export function AdminDashboard() {
     window.print();
   };
 
+  const handleExportCSV = () => {
+    const [year, month] = exportMonth.split('-');
+    
+    const filteredRequests = requests.filter(req => {
+      if (req.status !== 'approved') return false;
+      const reqDate = new Date(req.startDate);
+      return reqDate.getFullYear() === parseInt(year) && (reqDate.getMonth() + 1) === parseInt(month);
+    });
+
+    if (filteredRequests.length === 0) {
+      alert('אין חופשות מאושרות בחודש זה.');
+      return;
+    }
+
+    const headers = ['שם עובד', 'מתאריך', 'עד תאריך', 'סך ימי חופשה'];
+    const rows = filteredRequests.map(req => {
+      const user = users.find(u => u.id === req.userId);
+      const days = getBusinessDaysCount(new Date(req.startDate), new Date(req.endDate));
+      return [
+        user?.name || 'לא ידוע',
+        format(new Date(req.startDate), 'dd/MM/yyyy'),
+        format(new Date(req.endDate), 'dd/MM/yyyy'),
+        days.toString()
+      ];
+    });
+
+    // Add BOM for Hebrew Excel support
+    const csvContent = '\uFEFF' + [
+      headers.join(','),
+      ...rows.map(r => r.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `vacations_report_${exportMonth}.csv`;
+    link.click();
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
@@ -79,13 +121,31 @@ export function AdminDashboard() {
               <ShieldCheck className="w-5 h-5 text-blue-600 print:hidden" />
               ניהול בקשות חופשה
             </h2>
-            <button
-              onClick={handleExportPDF}
-              className="print:hidden flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              <Printer className="w-4 h-4" />
-              ייצוא ל-PDF
-            </button>
+            <div className="print:hidden flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                <input 
+                  type="month" 
+                  value={exportMonth}
+                  onChange={(e) => setExportMonth(e.target.value)}
+                  className="bg-transparent border-none text-sm focus:ring-0 text-gray-700 font-medium"
+                />
+                <button
+                  onClick={handleExportCSV}
+                  className="flex items-center gap-2 bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1.5 rounded-md font-medium transition-colors text-sm"
+                  title="ייצוא לאקסל (CSV)"
+                >
+                  <Download className="w-4 h-4" />
+                  אקסל
+                </button>
+              </div>
+              <button
+                onClick={handleExportPDF}
+                className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                <Printer className="w-4 h-4" />
+                ייצוא ל-PDF
+              </button>
+            </div>
           </div>
           
           <div className="overflow-x-auto">

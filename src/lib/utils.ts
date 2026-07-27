@@ -1,15 +1,48 @@
 import { eachDayOfInterval } from 'date-fns';
+import { HebrewCalendar, flags } from '@hebcal/core';
+
+// Cache holidays per year to avoid recalculating
+const holidaysCache: Record<number, Set<string>> = {};
+
+function getHolidaysForYear(year: number): Set<string> {
+  if (holidaysCache[year]) return holidaysCache[year];
+
+  const events = HebrewCalendar.calendar({
+    year,
+    isHebrewYear: false,
+    il: true, // Israel holidays
+  });
+
+  const holidayDates = new Set<string>();
+  for (const ev of events) {
+    // CHAG is a Yom Tov (work forbidden)
+    if (ev.getFlags() & flags.CHAG) {
+      const date = ev.getDate().greg();
+      holidayDates.add(date.toISOString().split('T')[0]);
+    }
+  }
+
+  holidaysCache[year] = holidayDates;
+  return holidayDates;
+}
+
+export function isJewishHoliday(date: Date): boolean {
+  const year = date.getFullYear();
+  const holidays = getHolidaysForYear(year);
+  return holidays.has(date.toISOString().split('T')[0]);
+}
 
 export function getBusinessDaysCount(startDate: Date, endDate: Date): number {
   try {
     const days = eachDayOfInterval({ start: startDate, end: endDate });
-    // In Israel, weekend is usually Friday and Saturday.
-    // date-fns isWeekend treats Saturday and Sunday as weekend by default, but let's be explicit if we want.
-    // However, isWeekend uses the locale or defaults to 0 and 6 (Sunday and Saturday).
-    // Let's implement a custom check for Friday (5) and Saturday (6).
+    
     const businessDays = days.filter(day => {
       const dayOfWeek = day.getDay();
-      return dayOfWeek !== 5 && dayOfWeek !== 6;
+      // Filter out Friday (5), Saturday (6), and Jewish Holidays (Yom Tov)
+      if (dayOfWeek === 5 || dayOfWeek === 6) return false;
+      if (isJewishHoliday(day)) return false;
+      
+      return true;
     });
     
     return businessDays.length;
