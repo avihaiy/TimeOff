@@ -14,9 +14,7 @@ function HebrewDateTime() {
   let hebrewDate = '';
   try {
     hebrewDate = new Intl.DateTimeFormat('he-IL', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
+      dateStyle: 'long',
       calendar: 'hebrew'
     }).format(time);
   } catch (e) {
