@@ -4,6 +4,8 @@ import { isWithinInterval, startOfDay } from 'date-fns';
 import { he } from 'date-fns/locale';
 import 'react-day-picker/dist/style.css';
 import { useStore } from '../lib/store';
+import { HDate } from '@hebcal/core';
+import { isJewishHoliday } from '../lib/utils';
 
 export function VacationCalendar() {
   const requests = useStore((state) => state.requests);
@@ -60,12 +62,40 @@ export function VacationCalendar() {
         onDayClick={() => {}} // Disabled selection
         disabled={() => true} // Disable clicking entirely for the calendar view
         footer={
-          <div className="mt-4 text-sm text-gray-600 text-right w-full">
-            <span className="inline-block w-3 h-3 bg-red-100 rounded-full ml-2 align-middle border border-red-200"></span>
-            יום חופשה (העבר את העכבר מעל התאריך לפרטים)
+          <div className="mt-4 text-sm text-gray-600 flex justify-between w-full">
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-3 h-3 bg-blue-400 rounded-full"></span>
+              <span>יום חג / שבתון</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-3 h-3 bg-red-100 rounded-full border border-red-200"></span>
+              <span>יום חופשה (העבר את העכבר מעל התאריך)</span>
+            </div>
           </div>
         }
+        components={{
+          DayButton: (props) => {
+            const { day, modifiers, ...buttonProps } = props as any;
+            const hd = new HDate(day.date);
+            const hebrewDay = hd.renderGematriya().split(' ')[0];
+            const isHoliday = isJewishHoliday(day.date);
+            
+            if (isHoliday) {
+              buttonProps.title = 'חג / שבתון';
+            }
 
+            return (
+              <button 
+                {...buttonProps} 
+                className={`${buttonProps.className || ''} flex flex-col items-center justify-center relative`}
+              >
+                <span className="font-medium">{day.date.getDate()}</span>
+                <span className="text-[10px] opacity-70 leading-none mt-0.5">{hebrewDay}</span>
+                {isHoliday && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-blue-400 rounded-full"></span>}
+              </button>
+            );
+          }
+        }}
       />
     </div>
   );
