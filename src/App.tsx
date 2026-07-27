@@ -1,3 +1,4 @@
+import { Toaster } from 'react-hot-toast';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useStore } from './lib/store';
 import { Layout } from './components/Layout';
@@ -76,6 +77,7 @@ function App() {
           } 
         />
       </Routes>
+      <Toaster position="bottom-center" toastOptions={{ className: 'font-medium text-sm' }} />
     </Router>
   );
 }

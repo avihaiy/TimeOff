@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../lib/store';
-import { LogOut, Calendar, Download, Clock } from 'lucide-react';
+import { LogOut, Calendar, Download, Clock, Sun, Moon } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { HDate } from '@hebcal/core';
 
@@ -35,6 +35,8 @@ function HebrewDateTime() {
 export function Layout({ children }: { children: React.ReactNode }) {
   const currentUser = useStore((state) => state.currentUser);
   const logout = useStore((state) => state.logout);
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
+  useEffect(() => { if (isDark) { document.documentElement.classList.add('dark'); localStorage.setItem('theme', 'dark'); } else { document.documentElement.classList.remove('dark'); localStorage.setItem('theme', 'light'); } }, [isDark]);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -64,7 +66,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900" dir="rtl">
-      <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+      <nav className="bg-white/85 dark:bg-gray-800/85 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center gap-3">
@@ -119,6 +121,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   )
                 )}
 
+                <button onClick={() => setIsDark(!isDark)} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-md transition-all hover:scale-105" title="החלף ערכת נושא">
+  {isDark ? <Sun className="w-5 h-5 sm:w-4 sm:h-4" /> : <Moon className="w-5 h-5 sm:w-4 sm:h-4" />}
+</button>
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
@@ -130,6 +135,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             ) : (
               <div className="flex items-center gap-4">
+                <button onClick={() => setIsDark(!isDark)} className="flex items-center p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-md transition-all hover:scale-105" title="החלף ערכת נושא">
+  {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+</button>
                 {installPrompt && (
                   <button
                     onClick={handleInstallClick}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useStore, type Role } from '../lib/store';
 import { format } from 'date-fns';
 import { CheckCircle, Clock, Download, Printer, ShieldCheck, XCircle, Users, Megaphone, CalendarDays, KeySquare, UserPlus, Edit, Trash2, X, Save, Upload } from 'lucide-react';
@@ -49,7 +50,7 @@ export function AdminDashboard() {
       addAnnouncement(newAnnouncementTitle, newAnnouncementContent);
       setNewAnnouncementTitle('');
       setNewAnnouncementContent('');
-      alert('הודעה פורסמה בהצלחה!');
+      toast.success('הודעה פורסמה בהצלחה!');
     }
   };
 
@@ -57,7 +58,7 @@ export function AdminDashboard() {
     e.preventDefault();
     if (newUserName && newUserUsername && newUserPassword) {
       if (users.find(u => u.username === newUserUsername)) {
-        alert('שם המשתמש כבר קיים');
+        toast.success('שם המשתמש כבר קיים');
         return;
       }
       addUser(newUserName, newUserUsername, newUserPassword, newUserRole, newUserQuota);
@@ -66,7 +67,7 @@ export function AdminDashboard() {
       setNewUserPassword('');
       setNewUserRole('employee');
       setNewUserQuota(14);
-      alert('משתמש נוצר בהצלחה');
+      toast.success('משתמש נוצר בהצלחה');
     }
   };
 
@@ -76,7 +77,7 @@ export function AdminDashboard() {
       updateUserPassword(selectedUserId, newPasswordForUser);
       setNewPasswordForUser('');
       setSelectedUserId('');
-      alert('סיסמה שונתה בהצלחה!');
+      toast.success('סיסמה שונתה בהצלחה!');
     }
   };
 
@@ -91,14 +92,14 @@ export function AdminDashboard() {
 
   const handleSaveEditUser = async (userId: string) => {
     if (!editUserForm.name.trim() || !editUserForm.username.trim()) {
-      alert('יש למלא שם מלא ותעודת זהות');
+      toast.success('יש למלא שם מלא ותעודת זהות');
       return;
     }
     
     // Check if new username (ID) already exists for another user
     const existingUser = users.find(u => u.username === editUserForm.username && u.id !== userId);
     if (existingUser) {
-      alert('תעודת זהות זו כבר קיימת במערכת עבור עובד אחר.');
+      toast.success('תעודת זהות זו כבר קיימת במערכת עבור עובד אחר.');
       return;
     }
 
@@ -145,7 +146,7 @@ export function AdminDashboard() {
         await addUsersBatch(newUsers);
         alert(`יובאו בהצלחה ${newUsers.length} עובדים חדשים!`);
       } else {
-        alert('לא נמצאו עובדים חדשים לייבוא (או שהקובץ אינו בפורמט הנכון). פורמט תקין: שם, תעודת זהות, מכסת ימים');
+        toast.success('לא נמצאו עובדים חדשים לייבוא (או שהקובץ אינו בפורמט הנכון). פורמט תקין: שם, תעודת זהות, מכסת ימים');
       }
       
       // Reset input
@@ -157,7 +158,7 @@ export function AdminDashboard() {
   const handleExportEmployeesCSV = () => {
     const employees = users.filter(u => u.role !== 'admin');
     if (employees.length === 0) {
-      alert('אין עובדים במערכת.');
+      toast.success('אין עובדים במערכת.');
       return;
     }
 
@@ -211,7 +212,7 @@ export function AdminDashboard() {
     });
 
     if (filteredRequests.length === 0) {
-      alert('אין חופשות מאושרות בחודש זה.');
+      toast.success('אין חופשות מאושרות בחודש זה.');
       return;
     }
 
@@ -247,7 +248,7 @@ export function AdminDashboard() {
       case 'rejected':
         return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><XCircle className="w-3 h-3" /> נדחה</span>;
       default:
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3" /> ממתין</span>;
+        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3" /> <span className="animate-pulse">ממתין</span></span>;
     }
   };
 
@@ -322,7 +323,7 @@ export function AdminDashboard() {
                   </div>
                   <button
                     onClick={handleExportPDF}
-                    className="flex-1 sm:flex-none flex justify-center items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap"
+                    className="flex-1 sm:flex-none flex justify-center items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-all hover:scale-[1.02] whitespace-nowrap"
                   >
                     <Printer className="w-4 h-4" />
                     ייצוא ל-PDF
