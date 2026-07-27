@@ -71,13 +71,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="bg-blue-600 p-2 rounded-xl">
                 <Calendar className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900 tracking-tight">המועצה הדתית עכו</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight whitespace-nowrap truncate max-w-[140px] sm:max-w-none">המועצה הדתית עכו</h1>
               <HebrewDateTime />
             </div>
             
             {currentUser ? (
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600 dark:text-gray-300">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <span className="hidden md:inline text-sm text-gray-600 dark:text-gray-300">
                   שלום, <span className="font-semibold text-gray-900 dark:text-white">{currentUser.name}</span>
                 </span>
 
@@ -96,14 +96,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   location.pathname === '/admin' ? (
                     <Link
                       to="/employee"
-                      className="text-sm bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors font-medium border border-blue-200"
+                      className="text-xs sm:text-sm bg-blue-50 text-blue-700 px-2 sm:px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors font-medium border border-blue-200 whitespace-nowrap"
                     >
                       החופשות שלי
                     </Link>
                   ) : (
                     <Link
                       to="/admin"
-                      className="text-sm bg-purple-50 text-purple-700 px-3 py-1.5 rounded-md hover:bg-purple-100 transition-colors font-medium border border-purple-200"
+                      className="text-xs sm:text-sm bg-purple-50 text-purple-700 px-2 sm:px-3 py-1.5 rounded-md hover:bg-purple-100 transition-colors font-medium border border-purple-200 whitespace-nowrap"
                     >
                       פאנל ניהול
                     </Link>
@@ -112,7 +112,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   location.pathname !== '/employee' && (
                     <Link
                       to="/employee"
-                      className="text-sm bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors font-medium border border-blue-200"
+                      className="text-xs sm:text-sm bg-blue-50 text-blue-700 px-2 sm:px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors font-medium border border-blue-200 whitespace-nowrap"
                     >
                       אזור אישי
                     </Link>
@@ -121,10 +121,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                  className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                  title="התנתק"
                 >
-                  <LogOut className="w-4 h-4" />
-                  התנתק
+                  <LogOut className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">התנתק</span>
                 </button>
               </div>
             ) : (
