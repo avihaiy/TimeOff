@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore, type Role } from '../lib/store';
 import { format } from 'date-fns';
-import { CheckCircle, Clock, Download, Printer, ShieldCheck, XCircle, Users, Megaphone, CalendarDays, KeySquare, UserPlus } from 'lucide-react';
+import { CheckCircle, Clock, Download, Printer, ShieldCheck, XCircle, Users, Megaphone, CalendarDays, KeySquare, UserPlus, Edit, Trash2, X, Save } from 'lucide-react';
 import { VacationCalendar } from '../components/VacationCalendar';
 import { AdminStats } from '../components/AdminStats';
 import { getBusinessDaysCount } from '../lib/utils';
@@ -14,6 +14,8 @@ export function AdminDashboard() {
   const updateRequestStatus = useStore((state) => state.updateRequestStatus);
   const addUser = useStore((state) => state.addUser);
   const addUsersBatch = useStore((state) => state.addUsersBatch);
+  const updateUser = useStore((state) => state.updateUser);
+  const deleteUser = useStore((state) => state.deleteUser);
   const updateUserPassword = useStore((state) => state.updateUserPassword);
 
   const addAnnouncement = useStore((state) => state.addAnnouncement);
@@ -27,6 +29,10 @@ export function AdminDashboard() {
   const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserRole, setNewUserRole] = useState<Role>('employee');
   const [newUserQuota, setNewUserQuota] = useState<number>(14);
+
+  // Edit user state
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editUserForm, setEditUserForm] = useState({ name: '', username: '', annualQuota: 14 });
 
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [newPasswordForUser, setNewPasswordForUser] = useState('');
@@ -70,6 +76,38 @@ export function AdminDashboard() {
       setNewPasswordForUser('');
       setSelectedUserId('');
       alert('סיסמה שונתה בהצלחה!');
+    }
+  };
+
+  const startEditUser = (user: any) => {
+    setEditingUserId(user.id);
+    setEditUserForm({
+      name: user.name,
+      username: user.username,
+      annualQuota: user.annualQuota
+    });
+  };
+
+  const handleSaveEditUser = async (userId: string) => {
+    if (!editUserForm.name.trim() || !editUserForm.username.trim()) {
+      alert('יש למלא שם מלא ותעודת זהות');
+      return;
+    }
+    
+    // Check if new username (ID) already exists for another user
+    const existingUser = users.find(u => u.username === editUserForm.username && u.id !== userId);
+    if (existingUser) {
+      alert('תעודת זהות זו כבר קיימת במערכת עבור עובד אחר.');
+      return;
+    }
+
+    await updateUser(userId, editUserForm);
+    setEditingUserId(null);
+  };
+
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (window.confirm(`האם אתה בטוח שברצונך למחוק את העובד ${userName}? שימו לב - זה ימחק גם את כל בקשות החופשה שלו (פעולה בלתי הפיכה!).`)) {
+      await deleteUser(userId);
     }
   };
 
@@ -358,6 +396,7 @@ export function AdminDashboard() {
                     <th className="px-6 py-3 text-sm font-semibold text-gray-600 text-center">מכסה שנתית</th>
                     <th className="px-6 py-3 text-sm font-semibold text-gray-600 text-center">נוצלו השנה</th>
                     <th className="px-6 py-3 text-sm font-semibold text-gray-600 text-center">יתרה</th>
+                    <th className="px-6 py-3 text-sm font-semibold text-gray-600 text-center">פעולות</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -378,13 +417,88 @@ export function AdminDashboard() {
                       const usedDays = myApprovedRequests.reduce((total, req) => total + getBusinessDaysCount(new Date(req.startDate), new Date(req.endDate)), 0);
                       const remainingDays = user.annualQuota - usedDays;
 
-                      return (
+                      return editingUserId === user.id ? (
+                        <tr key={user.id} className="bg-blue-50/30">
+                          <td className="px-4 py-3">
+                            <input
+                              type="text"
+                              value={editUserForm.name}
+                              onChange={(e) => setEditUserForm({ ...editUserForm, name: e.target.value })}
+                              className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="text"
+                              value={editUserForm.username}
+                              onChange={(e) => setEditUserForm({ ...editUserForm, username: e.target.value })}
+                              className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="number"
+                              min="1"
+                              value={editUserForm.annualQuota}
+                              onChange={(e) => setEditUserForm({ ...editUserForm, annualQuota: Number(e.target.value) })}
+                              className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm text-center"
+                            />
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500 text-center">{usedDays}</td>
+                          <td className="px-6 py-4 text-sm font-semibold text-emerald-600 text-center">{remainingDays}</td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleSaveEditUser(user.id)}
+                                className="p-1.5 text-green-600 hover:bg-green-100 rounded transition-colors"
+                                title="שמור"
+                              >
+                                <Save className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setEditingUserId(null)}
+                                className="p-1.5 text-gray-500 hover:bg-gray-200 rounded transition-colors"
+                                title="ביטול"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
                         <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
                           <td className="px-6 py-4 text-sm font-medium text-gray-900">{user.name}</td>
                           <td className="px-6 py-4 text-sm text-gray-500">{user.username}</td>
                           <td className="px-6 py-4 text-sm text-gray-900 text-center">{user.annualQuota}</td>
                           <td className="px-6 py-4 text-sm text-gray-500 text-center">{usedDays}</td>
                           <td className="px-6 py-4 text-sm font-semibold text-emerald-600 text-center">{remainingDays}</td>
+                          <td className="px-4 py-4 text-center">
+                            <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => startEditUser(user)}
+                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                title="ערוך פרטים"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUser(user.id, user.name)}
+                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                title="מחק עובד"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <div className="md:hidden flex items-center justify-center gap-2 mt-2">
+                              {/* Always visible on mobile */}
+                              <button onClick={() => startEditUser(user)} className="p-1.5 text-blue-600 bg-blue-50 rounded">
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => handleDeleteUser(user.id, user.name)} className="p-1.5 text-red-600 bg-red-50 rounded">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       );
                     })

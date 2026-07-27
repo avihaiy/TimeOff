@@ -68,8 +68,6 @@ function App() {
           element={
             currentUser?.role === 'admin' ? (
               <Navigate to="/admin" replace />
-            ) : currentUser?.role === 'employee' ? (
-              <Navigate to="/employee" replace />
             ) : (
               <Layout>
                 <PublicRequestForm />

@@ -44,6 +44,8 @@ interface AppState {
   addUser: (name: string, username: string, password: string | undefined, role: Role, annualQuota: number) => Promise<void>;
   addUsersBatch: (users: {name: string, username: string, annualQuota: number}[]) => Promise<void>;
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
+  updateUser: (userId: string, updates: { name: string, username: string, annualQuota: number }) => Promise<void>;
+  deleteUser: (userId: string) => Promise<void>;
   addRequest: (userId: string | null, employeeName: string, employeeId: string, startDate: string, endDate: string, signature?: string) => Promise<void>;
   updateRequestStatus: (requestId: string, status: 'approved' | 'rejected' | 'pending') => Promise<void>;
   deleteRequest: (requestId: string) => Promise<void>;
@@ -191,8 +193,55 @@ export const useStore = create<AppState>()((set) => ({
         ),
       }));
     } catch (error) {
-      console.error('Error updating password:', error);
+      console.error('Error updating user password:', error);
       alert('שגיאה בעדכון סיסמה');
+    }
+  },
+
+  updateUser: async (userId, updates) => {
+    try {
+      const { error } = await supabase
+        .from('vacation_users')
+        .update({
+          name: updates.name,
+          username: updates.username,
+          annual_quota: updates.annualQuota
+        })
+        .eq('id', userId);
+        
+      if (error) throw error;
+      
+      set((state) => ({
+        users: state.users.map((user) => 
+          user.id === userId ? { 
+            ...user, 
+            name: updates.name, 
+            username: updates.username, 
+            annualQuota: updates.annualQuota 
+          } : user
+        ),
+      }));
+    } catch (error) {
+      console.error('Error updating user:', error);
+      alert('שגיאה בעדכון פרטי משתמש');
+    }
+  },
+
+  deleteUser: async (userId) => {
+    try {
+      const { error } = await supabase
+        .from('vacation_users')
+        .delete()
+        .eq('id', userId);
+        
+      if (error) throw error;
+      
+      set((state) => ({
+        users: state.users.filter((user) => user.id !== userId),
+      }));
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('שגיאה במחיקת משתמש');
     }
   },
 
