@@ -13,6 +13,7 @@ export function AdminDashboard() {
   const users = useStore((state) => state.users);
   const updateRequestStatus = useStore((state) => state.updateRequestStatus);
   const addUser = useStore((state) => state.addUser);
+  const addUsersBatch = useStore((state) => state.addUsersBatch);
   const updateUserPassword = useStore((state) => state.updateUserPassword);
 
   const addAnnouncement = useStore((state) => state.addAnnouncement);
@@ -70,6 +71,48 @@ export function AdminDashboard() {
       setSelectedUserId('');
       alert('סיסמה שונתה בהצלחה!');
     }
+  };
+
+  const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      const lines = text.split('\n').filter(line => line.trim().length > 0);
+      // Skip header if it exists (check first line)
+      const startIndex = lines[0].includes('שם') ? 1 : 0;
+      
+      const newUsers = [];
+      for (let i = startIndex; i < lines.length; i++) {
+        const line = lines[i].trim();
+        // Handle CSV parsing simply (assuming no quoted commas for now)
+        const parts = line.split(',');
+        if (parts.length >= 3) {
+          const name = parts[0].trim();
+          const username = parts[1].trim(); // ID
+          const annualQuota = parseInt(parts[2].trim(), 10) || 12;
+
+          if (name && username && !users.find(u => u.username === username)) {
+            newUsers.push({ name, username, annualQuota });
+          }
+        }
+      }
+
+      if (newUsers.length > 0) {
+        await addUsersBatch(newUsers);
+        alert(`יובאו בהצלחה ${newUsers.length} עובדים חדשים!`);
+      } else {
+        alert('לא נמצאו עובדים חדשים לייבוא (או שהקובץ אינו בפורמט הנכון). פורמט תקין: שם, תעודת זהות, מכסת ימים');
+      }
+      
+      // Reset input
+      e.target.value = '';
+    };
+    reader.readAsText(file);
   };
 
   const handleExportPDF = () => {
@@ -289,128 +332,191 @@ export function AdminDashboard() {
 
       {/* Users Management Section */}
       {activeTab === 'users' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:hidden">
-          {/* Change User Password */}
+        <div className="space-y-8 print:hidden">
+          {/* Employee Pool Table */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <KeySquare className="w-5 h-5 text-blue-600" />
-              איפוס סיסמה לעובד
-            </h2>
-            
-            <form onSubmit={handleChangePassword} className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-600" />
+                מאגר עובדים
+              </h2>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">בחר משתמש</label>
-                <select
-                  required
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                >
-                  <option value="" disabled>-- בחר --</option>
-                  {users.map(u => (
-                    <option key={u.id} value={u.id}>{u.name} ({u.username})</option>
-                  ))}
-                </select>
+                <label className="cursor-pointer bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border border-emerald-200 flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  ייבוא מקובץ Excel (CSV)
+                  <input type="file" accept=".csv" className="hidden" onChange={handleCSVImport} />
+                </label>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">סיסמה חדשה</label>
-                <input
-                  type="text"
-                  required
-                  value={newPasswordForUser}
-                  onChange={(e) => setNewPasswordForUser(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  placeholder="הקלד סיסמה חדשה"
-                />
-              </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-right">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-sm font-semibold text-gray-600">שם עובד</th>
+                    <th className="px-6 py-3 text-sm font-semibold text-gray-600">תעודת זהות</th>
+                    <th className="px-6 py-3 text-sm font-semibold text-gray-600 text-center">מכסה שנתית</th>
+                    <th className="px-6 py-3 text-sm font-semibold text-gray-600 text-center">נוצלו השנה</th>
+                    <th className="px-6 py-3 text-sm font-semibold text-gray-600 text-center">יתרה</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {users.filter(u => u.role !== 'admin').length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                        לא נמצאו עובדים במערכת. לחץ על כפתור הייבוא כדי להוסיף.
+                      </td>
+                    </tr>
+                  ) : (
+                    users.filter(u => u.role !== 'admin').map((user) => {
+                      const currentYear = new Date().getFullYear();
+                      const myApprovedRequests = requests.filter(r => 
+                        r.status === 'approved' && 
+                        (r.userId === user.id || r.employeeId === user.username) &&
+                        new Date(r.startDate).getFullYear() === currentYear
+                      );
+                      const usedDays = myApprovedRequests.reduce((total, req) => total + getBusinessDaysCount(new Date(req.startDate), new Date(req.endDate)), 0);
+                      const remainingDays = user.annualQuota - usedDays;
 
-              <button
-                type="submit"
-                className="w-full px-6 bg-gray-900 hover:bg-gray-800 text-white font-medium py-2.5 rounded-lg shadow-sm transition-colors mt-4"
-              >
-                שנה סיסמה
-              </button>
-            </form>
+                      return (
+                        <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{user.name}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">{user.username}</td>
+                          <td className="px-6 py-4 text-sm text-gray-900 text-center">{user.annualQuota}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500 text-center">{usedDays}</td>
+                          <td className="px-6 py-4 text-sm font-semibold text-emerald-600 text-center">{remainingDays}</td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Add New User */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-blue-600" />
-              הוספת משתמש חדש
-            </h2>
-            
-            <form onSubmit={handleAddUser} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">שם מלא</label>
-                    <input
-                      type="text"
-                      required
-                      value={newUserName}
-                      onChange={(e) => setNewUserName(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">מכסת ימי חופשה (שנתית)</label>
-                    <input
-                      type="number"
-                      min="1"
-                      required
-                      value={newUserQuota}
-                      onChange={(e) => setNewUserQuota(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    />
-                  </div>
-                </div>
-                
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Change User Password */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <KeySquare className="w-5 h-5 text-blue-600" />
+                איפוס סיסמה לעובד
+              </h2>
+              
+              <form onSubmit={handleChangePassword} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">שם משתמש</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">בחר משתמש</label>
+                  <select
+                    required
+                    value={selectedUserId}
+                    onChange={(e) => setSelectedUserId(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  >
+                    <option value="" disabled>-- בחר --</option>
+                    {users.map(u => (
+                      <option key={u.id} value={u.id}>{u.name} ({u.username})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">סיסמה חדשה</label>
                   <input
                     type="text"
                     required
-                    value={newUserUsername}
-                    onChange={(e) => setNewUserUsername(e.target.value)}
+                    value={newPasswordForUser}
+                    onChange={(e) => setNewPasswordForUser(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    placeholder="הקלד סיסמה חדשה"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="submit"
+                  className="w-full px-6 bg-gray-900 hover:bg-gray-800 text-white font-medium py-2.5 rounded-lg shadow-sm transition-colors mt-4"
+                >
+                  שנה סיסמה
+                </button>
+              </form>
+            </div>
+
+            {/* Add New User */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-blue-600" />
+                הוספת משתמש חדש (ידני)
+              </h2>
+              
+              <form onSubmit={handleAddUser} className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">שם מלא</label>
+                      <input
+                        type="text"
+                        required
+                        value={newUserName}
+                        onChange={(e) => setNewUserName(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">מכסת ימים</label>
+                      <input
+                        type="number"
+                        min="1"
+                        required
+                        value={newUserQuota}
+                        onChange={(e) => setNewUserQuota(Number(e.target.value))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">סיסמה</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">שם משתמש (תעודת זהות)</label>
                     <input
-                      type="password"
+                      type="text"
                       required
-                      value={newUserPassword}
-                      onChange={(e) => setNewUserPassword(e.target.value)}
+                      value={newUserUsername}
+                      onChange={(e) => setNewUserUsername(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                     />
                   </div>
-                
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">תפקיד</label>
-                    <select
-                      value={newUserRole}
-                      onChange={(e) => setNewUserRole(e.target.value as Role)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    >
-                      <option value="employee">עובד רגיל</option>
-                      <option value="admin">מנהל מערכת</option>
-                    </select>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">סיסמה</label>
+                      <input
+                        type="password"
+                        required
+                        value={newUserPassword}
+                        onChange={(e) => setNewUserPassword(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                      />
+                    </div>
+                  
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">תפקיד</label>
+                      <select
+                        value={newUserRole}
+                        onChange={(e) => setNewUserRole(e.target.value as Role)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                      >
+                        <option value="employee">עובד רגיל</option>
+                        <option value="admin">מנהל מערכת</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                className="w-full px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg shadow-sm transition-colors mt-4"
-              >
-                צור משתמש
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  className="w-full px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg shadow-sm transition-colors mt-4"
+                >
+                  צור משתמש
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}

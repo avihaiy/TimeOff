@@ -42,6 +42,7 @@ interface AppState {
   login: (username: string) => void;
   logout: () => void;
   addUser: (name: string, username: string, password: string | undefined, role: Role, annualQuota: number) => Promise<void>;
+  addUsersBatch: (users: {name: string, username: string, annualQuota: number}[]) => Promise<void>;
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
   addRequest: (userId: string | null, employeeName: string, employeeId: string, startDate: string, endDate: string, signature?: string) => Promise<void>;
   updateRequestStatus: (requestId: string, status: 'approved' | 'rejected' | 'pending') => Promise<void>;
@@ -146,6 +147,32 @@ export const useStore = create<AppState>()((set) => ({
     } catch (error) {
       console.error('Error adding user:', error);
       alert('שגיאה ביצירת משתמש');
+    }
+  },
+
+  addUsersBatch: async (newUsers) => {
+    try {
+      const usersToInsert = newUsers.map(u => ({
+        name: u.name,
+        username: u.username,
+        password: '123', // Default password for imported users
+        role: 'employee',
+        annual_quota: u.annualQuota
+      }));
+
+      const { data, error } = await supabase
+        .from('vacation_users')
+        .insert(usersToInsert)
+        .select();
+        
+      if (error) throw error;
+      
+      set((state) => ({
+        users: [...state.users, ...data.map(mapUser)],
+      }));
+    } catch (error) {
+      console.error('Error adding users batch:', error);
+      alert('שגיאה בייבוא משתמשים');
     }
   },
 
