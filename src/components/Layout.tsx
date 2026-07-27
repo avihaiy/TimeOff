@@ -21,13 +21,13 @@ function HebrewDateTime() {
   });
 
   return (
-    <div className="flex flex-col md:flex-row items-start md:items-center gap-0 md:gap-3 mr-2 md:mr-6 text-[10px] sm:text-xs md:text-sm text-gray-500 md:text-gray-600 font-medium md:bg-gray-50/80 md:px-4 md:py-1.5 rounded-full md:border border-gray-100 leading-tight">
-      <div className="flex items-center gap-1 md:gap-1.5 text-blue-600 md:text-blue-700">
-        <Clock className="w-3 h-3 md:w-4 md:h-4" />
+    <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium leading-tight">
+      <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+        <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
         <span dir="ltr">{timeString}</span>
       </div>
-      <div className="hidden md:block w-1 h-1 bg-gray-300 rounded-full"></div>
-      <div className="text-gray-600 md:text-gray-700">{hebrewDate}</div>
+      <div className="w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+      <div className="text-gray-500 dark:text-gray-400">{hebrewDate}</div>
     </div>
   );
 }
@@ -69,12 +69,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <nav className="bg-white/85 dark:bg-gray-800/85 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="w-10 h-10 shrink-0">
                 <img src="/icon-192.png" alt="לוגו המועצה" className="w-full h-full object-contain drop-shadow-sm" />
               </div>
-              <h1 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight whitespace-nowrap truncate max-w-[140px] sm:max-w-none">המועצה הדתית עכו</h1>
-              <HebrewDateTime />
+              <div className="flex flex-col justify-center">
+                <h1 className="text-sm sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight whitespace-nowrap">המועצה הדתית עכו</h1>
+                <HebrewDateTime />
+              </div>
             </div>
             
             {currentUser ? (
