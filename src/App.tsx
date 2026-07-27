@@ -3,6 +3,7 @@ import { useStore } from './lib/store';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { PublicRequestForm } from './pages/PublicRequestForm';
+import { EmployeeDashboard } from './pages/EmployeeDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { useEffect } from 'react';
 
@@ -54,10 +55,21 @@ function App() {
         />
 
         <Route 
+          path="/employee" 
+          element={
+            <ProtectedRoute role="employee">
+              <EmployeeDashboard />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
           path="/" 
           element={
             currentUser?.role === 'admin' ? (
               <Navigate to="/admin" replace />
+            ) : currentUser?.role === 'employee' ? (
+              <Navigate to="/employee" replace />
             ) : (
               <Layout>
                 <PublicRequestForm />

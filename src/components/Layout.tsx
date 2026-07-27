@@ -62,7 +62,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </button>
                 )}
                 
-                {currentUser.role === 'admin' && (
+                {currentUser.role === 'admin' ? (
                   location.pathname === '/admin' ? (
                     <Link
                       to="/employee"
@@ -76,6 +76,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       className="text-sm bg-purple-50 text-purple-700 px-3 py-1.5 rounded-md hover:bg-purple-100 transition-colors font-medium border border-purple-200"
                     >
                       פאנל ניהול
+                    </Link>
+                  )
+                ) : (
+                  location.pathname !== '/employee' && (
+                    <Link
+                      to="/employee"
+                      className="text-sm bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors font-medium border border-blue-200"
+                    >
+                      אזור אישי
                     </Link>
                   )
                 )}
