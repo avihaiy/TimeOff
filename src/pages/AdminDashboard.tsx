@@ -255,33 +255,33 @@ export function AdminDashboard() {
     <div className="space-y-6 print:space-y-0">
       
       {/* Tabs Navigation */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 flex gap-2 overflow-x-auto print:hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 grid grid-cols-3 sm:flex gap-1 sm:gap-2 print:hidden">
         <button
           onClick={() => setActiveTab('vacations')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          className={`flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-2.5 rounded-lg text-[10px] sm:text-sm font-medium transition-colors text-center ${
             activeTab === 'vacations' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'
           }`}
         >
-          <CalendarDays className="w-4 h-4" />
-          ניהול חופשות
+          <CalendarDays className="w-4 h-4 sm:w-4 sm:h-4" />
+          <span className="whitespace-normal sm:whitespace-nowrap leading-tight">ניהול חופשות</span>
         </button>
         <button
           onClick={() => setActiveTab('users')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          className={`flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-2.5 rounded-lg text-[10px] sm:text-sm font-medium transition-colors text-center ${
             activeTab === 'users' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'
           }`}
         >
-          <Users className="w-4 h-4" />
-          ניהול עובדים
+          <Users className="w-4 h-4 sm:w-4 sm:h-4" />
+          <span className="whitespace-normal sm:whitespace-nowrap leading-tight">ניהול עובדים</span>
         </button>
         <button
           onClick={() => setActiveTab('announcements')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          className={`flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 px-1 sm:px-4 py-2 sm:py-2.5 rounded-lg text-[10px] sm:text-sm font-medium transition-colors text-center ${
             activeTab === 'announcements' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'
           }`}
         >
-          <Megaphone className="w-4 h-4" />
-          לוח מודעות
+          <Megaphone className="w-4 h-4 sm:w-4 sm:h-4" />
+          <span className="whitespace-normal sm:whitespace-nowrap leading-tight">לוח מודעות</span>
         </button>
       </div>
 
@@ -289,7 +289,7 @@ export function AdminDashboard() {
         <div className="space-y-8 print:space-y-0">
           <AdminStats />
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 gap-8">
             
             {/* Calendar View */}
             <div className="lg:col-span-1 print:hidden">
@@ -297,23 +297,23 @@ export function AdminDashboard() {
             </div>
 
             {/* Requests Table */}
-            <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 print:shadow-none print:border-none print:p-0">
-              <div className="flex justify-between items-center mb-6">
+            <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 print:shadow-none print:border-none print:p-0">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-blue-600 print:hidden" />
                   ניהול בקשות חופשה
                 </h2>
-                <div className="print:hidden flex items-center gap-4">
-                  <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                <div className="print:hidden flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <div className="flex flex-1 sm:flex-none items-center gap-2 bg-gray-50 p-1.5 sm:p-2 rounded-lg border border-gray-200">
                     <input 
                       type="month" 
                       value={exportMonth}
                       onChange={(e) => setExportMonth(e.target.value)}
-                      className="bg-transparent border-none text-sm focus:ring-0 text-gray-700 font-medium"
+                      className="bg-transparent border-none text-sm focus:ring-0 text-gray-700 font-medium w-full min-w-[120px]"
                     />
                     <button
                       onClick={handleExportCSV}
-                      className="flex items-center gap-2 bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1.5 rounded-md font-medium transition-colors text-sm"
+                      className="flex items-center justify-center gap-2 bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1.5 rounded-md font-medium transition-colors text-sm whitespace-nowrap"
                       title="ייצוא לאקסל (CSV)"
                     >
                       <Download className="w-4 h-4" />
@@ -322,7 +322,7 @@ export function AdminDashboard() {
                   </div>
                   <button
                     onClick={handleExportPDF}
-                    className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors"
+                    className="flex-1 sm:flex-none flex justify-center items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap"
                   >
                     <Printer className="w-4 h-4" />
                     ייצוא ל-PDF
