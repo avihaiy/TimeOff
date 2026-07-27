@@ -13,6 +13,10 @@ export function AdminDashboard() {
   const addUser = useStore((state) => state.addUser);
   const updateUserPassword = useStore((state) => state.updateUserPassword);
 
+  const addAnnouncement = useStore((state) => state.addAnnouncement);
+  const deleteAnnouncement = useStore((state) => state.deleteAnnouncement);
+  const announcements = useStore((state) => state.announcements);
+
   const [newUserName, setNewUserName] = useState('');
   const [newUserUsername, setNewUserUsername] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
@@ -23,6 +27,19 @@ export function AdminDashboard() {
   const [newPasswordForUser, setNewPasswordForUser] = useState('');
 
   const [exportMonth, setExportMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
+
+  const [newAnnouncementTitle, setNewAnnouncementTitle] = useState('');
+  const [newAnnouncementContent, setNewAnnouncementContent] = useState('');
+
+  const handleAddAnnouncement = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newAnnouncementTitle && newAnnouncementContent) {
+      addAnnouncement(newAnnouncementTitle, newAnnouncementContent);
+      setNewAnnouncementTitle('');
+      setNewAnnouncementContent('');
+      alert('הודעה פורסמה בהצלחה!');
+    }
+  };
 
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
@@ -341,6 +358,79 @@ export function AdminDashboard() {
               צור משתמש
             </button>
           </form>
+        </div>
+      </div>
+
+      {/* Announcements Section */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 print:hidden mt-8">
+        <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+          <span className="text-blue-600">📢</span> לוח מודעות
+        </h2>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Post new announcement */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">פרסום הודעה חדשה</h3>
+            <form onSubmit={handleAddAnnouncement} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">כותרת</label>
+                <input
+                  type="text"
+                  required
+                  value={newAnnouncementTitle}
+                  onChange={(e) => setNewAnnouncementTitle(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  placeholder="למשל: חג פסח שמח!"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">תוכן</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={newAnnouncementContent}
+                  onChange={(e) => setNewAnnouncementContent(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+                  placeholder="הזן את פרטי ההודעה כאן..."
+                ></textarea>
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors"
+              >
+                פרסם מודעה
+              </button>
+            </form>
+          </div>
+
+          {/* List of announcements */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">הודעות אחרונות</h3>
+            {announcements.length === 0 ? (
+              <p className="text-gray-500 text-sm">אין הודעות פעילות.</p>
+            ) : (
+              <div className="space-y-3">
+                {announcements.map((ann) => (
+                  <div key={ann.id} className="bg-gray-50 p-4 rounded-lg border border-gray-100 flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold text-gray-900">{ann.title}</h4>
+                      <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{ann.content}</p>
+                      <span className="text-xs text-gray-400 mt-2 block">
+                        פורסם ב: {format(new Date(ann.createdAt), 'dd/MM/yyyy HH:mm')}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => deleteAnnouncement(ann.id)}
+                      className="text-red-500 hover:text-red-700 p-1"
+                      title="מחק הודעה"
+                    >
+                      <XCircle className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

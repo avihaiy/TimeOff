@@ -2,12 +2,21 @@ import { useState } from 'react';
 import { useStore } from '../lib/store';
 import { getBusinessDaysCount } from '../lib/utils';
 import { format, eachDayOfInterval, isBefore, startOfDay } from 'date-fns';
-import { Calendar, Clock, CheckCircle, XCircle, Briefcase, CalendarOff } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, Briefcase, CalendarOff, CalendarPlus, Megaphone } from 'lucide-react';
+
+const generateGoogleCalendarUrl = (startDate: string, endDate: string) => {
+  const end = new Date(endDate);
+  end.setDate(end.getDate() + 1);
+  const formatForGoogle = (d: Date) => d.toISOString().replace(/-|:|\.\d\d\d/g, '').substring(0, 8);
+  const dates = `${formatForGoogle(new Date(startDate))}/${formatForGoogle(end)}`;
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('חופשה מאושרת')}&dates=${dates}`;
+};
 
 export function EmployeeDashboard() {
   const currentUser = useStore((state) => state.currentUser);
   const addRequest = useStore((state) => state.addRequest);
   const requests = useStore((state) => state.requests);
+  const announcements = useStore((state) => state.announcements);
   
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -112,36 +121,54 @@ export function EmployeeDashboard() {
       
       {/* Quota Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-500">מכסה שנתית</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{annualQuota}</p>
-          </div>
-          <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center gap-4">
+          <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
             <Briefcase className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500 mb-1">מכסה שנתית</p>
+            <p className="text-2xl font-bold text-gray-900">{annualQuota} ימים</p>
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-500">נוצלו (מאושרים)</p>
-            <p className="text-3xl font-bold text-red-600 mt-1">{usedDays}</p>
-          </div>
-          <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center gap-4">
+          <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center">
             <CalendarOff className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500 mb-1">נוצלו השנה</p>
+            <p className="text-2xl font-bold text-gray-900">{usedDays} ימים</p>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-500">יתרה זמינה</p>
-            <p className="text-3xl font-bold text-green-600 mt-1">{remainingDays}</p>
-          </div>
-          <div className="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center gap-4">
+          <div className="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center">
             <CheckCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500 mb-1">יתרה לניצול</p>
+            <p className="text-2xl font-bold text-gray-900">{remainingDays} ימים</p>
           </div>
         </div>
       </div>
+
+      {announcements.length > 0 && (
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6">
+          <h2 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">
+            <Megaphone className="w-5 h-5" />
+            לוח מודעות
+          </h2>
+          <div className="space-y-4">
+            {announcements.map(ann => (
+              <div key={ann.id} className="bg-white p-4 rounded-xl shadow-sm border border-blue-50">
+                <h3 className="font-semibold text-gray-900">{ann.title}</h3>
+                <p className="text-gray-700 mt-1 whitespace-pre-wrap">{ann.content}</p>
+                <span className="text-xs text-gray-400 mt-2 block">{format(new Date(ann.createdAt), 'dd/MM/yyyy')}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Request Form */}
@@ -207,6 +234,7 @@ export function EmployeeDashboard() {
                     <th className="px-6 py-3 text-sm font-semibold text-gray-600">ימים</th>
                     <th className="px-6 py-3 text-sm font-semibold text-gray-600">הוגש ב</th>
                     <th className="px-6 py-3 text-sm font-semibold text-gray-600">סטטוס</th>
+                    <th className="px-6 py-3 text-sm font-semibold text-gray-600">פעולות</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -233,6 +261,20 @@ export function EmployeeDashboard() {
                         </td>
                         <td className="px-6 py-4">
                           {getStatusBadge(req.status)}
+                        </td>
+                        <td className="px-6 py-4">
+                          {req.status === 'approved' && (
+                            <a
+                              href={generateGoogleCalendarUrl(req.startDate, req.endDate)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2 py-1.5 rounded-lg transition-colors"
+                              title="הוסף ליומן גוגל"
+                            >
+                              <CalendarPlus className="w-3.5 h-3.5" />
+                              ליומן
+                            </a>
+                          )}
                         </td>
                       </tr>
                     ))
