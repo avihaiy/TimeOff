@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore, type Role } from '../lib/store';
 import { format } from 'date-fns';
-import { CheckCircle, Clock, Download, Printer, ShieldCheck, XCircle, Users, Megaphone, CalendarDays, KeySquare, UserPlus, Edit, Trash2, X, Save } from 'lucide-react';
+import { CheckCircle, Clock, Download, Printer, ShieldCheck, XCircle, Users, Megaphone, CalendarDays, KeySquare, UserPlus, Edit, Trash2, X, Save, Upload } from 'lucide-react';
 import { VacationCalendar } from '../components/VacationCalendar';
 import { AdminStats } from '../components/AdminStats';
 import { getBusinessDaysCount } from '../lib/utils';
@@ -151,6 +151,49 @@ export function AdminDashboard() {
       e.target.value = '';
     };
     reader.readAsText(file);
+  };
+
+  const handleExportEmployeesCSV = () => {
+    const employees = users.filter(u => u.role !== 'admin');
+    if (employees.length === 0) {
+      alert('אין עובדים במערכת.');
+      return;
+    }
+
+    const currentYear = new Date().getFullYear();
+    const headers = ['שם עובד', 'תעודת זהות', 'מכסה שנתית', 'נוצלו השנה', 'יתרה'];
+    
+    const rows = employees.map(user => {
+      const myApprovedRequests = requests.filter(r => 
+        r.status === 'approved' && 
+        (r.userId === user.id || r.employeeId === user.username) &&
+        new Date(r.startDate).getFullYear() === currentYear
+      );
+      const usedDays = myApprovedRequests.reduce((total, req) => total + getBusinessDaysCount(new Date(req.startDate), new Date(req.endDate)), 0);
+      const remainingDays = user.annualQuota - usedDays;
+
+      return [
+        user.name,
+        user.username,
+        user.annualQuota,
+        usedDays,
+        remainingDays
+      ];
+    });
+
+    const csvContent = [
+      '\uFEFF' + headers.join(','), // \uFEFF for Hebrew BOM
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `employees_${currentYear}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleExportPDF = () => {
@@ -378,7 +421,14 @@ export function AdminDashboard() {
                 <Users className="w-5 h-5 text-blue-600" />
                 מאגר עובדים
               </h2>
-              <div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleExportEmployeesCSV}
+                  className="bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border border-blue-200 flex items-center gap-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  ייצוא לאקסל
+                </button>
                 <label className="cursor-pointer bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border border-emerald-200 flex items-center gap-2">
                   <Download className="w-4 h-4" />
                   ייבוא מקובץ Excel (CSV)
