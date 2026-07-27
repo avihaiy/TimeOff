@@ -67,8 +67,8 @@ export function PublicRequestForm() {
   // Live calculated remaining days
   const employeeUser = useMemo(() => {
     if (!employeeId) return null;
-    return users.find(u => u.username === employeeId);
-  }, [employeeId, users]);
+    return users.find(u => u.username === employeeId && u.name === employeeName);
+  }, [employeeId, employeeName, users]);
 
   const quotaInfo = useMemo(() => {
     if (!employeeUser) return null;
@@ -95,13 +95,18 @@ export function PublicRequestForm() {
     setError('');
     setSuccess(false);
 
-    if (!employeeName.trim() || !employeeId.trim()) {
-      setError('יש להזין שם מלא ותעודת זהות');
+    if (!employeeName) {
+      setError('יש לבחור שם מהרשימה');
+      return;
+    }
+
+    if (!employeeId.trim()) {
+      setError('יש להזין תעודת זהות');
       return;
     }
 
     if (!employeeUser) {
-      setError('תעודת הזהות לא קיימת במערכת. אנא פנה למנהל להוספת העובד.');
+      setError('תעודת הזהות אינה תואמת לשם העובד שנבחר, או שהעובד לא מוגדר במערכת.');
       return;
     }
 
@@ -220,14 +225,17 @@ export function PublicRequestForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">שם מלא</label>
-                <input
-                  type="text"
+                <select
                   required
-                  placeholder="ישראל ישראלי"
                   value={employeeName}
                   onChange={(e) => setEmployeeName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                />
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                >
+                  <option value="" disabled>-- בחר עובד --</option>
+                  {users.filter(u => u.role !== 'admin').map(user => (
+                    <option key={user.id} value={user.name}>{user.name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">תעודת זהות</label>
