@@ -1,11 +1,12 @@
 import { useStore } from '../lib/store';
 import { LogOut, Calendar } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const currentUser = useStore((state) => state.currentUser);
   const logout = useStore((state) => state.logout);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -29,6 +30,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span className="text-sm text-gray-600 dark:text-gray-300">
                   שלום, <span className="font-semibold text-gray-900 dark:text-white">{currentUser.name}</span>
                 </span>
+                
+                {currentUser.role === 'admin' && (
+                  location.pathname === '/admin' ? (
+                    <Link
+                      to="/employee"
+                      className="text-sm bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors font-medium border border-blue-200"
+                    >
+                      החופשות שלי
+                    </Link>
+                  ) : (
+                    <Link
+                      to="/admin"
+                      className="text-sm bg-purple-50 text-purple-700 px-3 py-1.5 rounded-md hover:bg-purple-100 transition-colors font-medium border border-purple-200"
+                    >
+                      פאנל ניהול
+                    </Link>
+                  )
+                )}
+
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
