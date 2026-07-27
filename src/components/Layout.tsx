@@ -21,13 +21,13 @@ function HebrewDateTime() {
   });
 
   return (
-    <div className="hidden md:flex items-center gap-3 mr-6 text-sm text-gray-600 font-medium bg-gray-50/80 px-4 py-1.5 rounded-full border border-gray-100">
-      <div className="flex items-center gap-1.5 text-blue-700">
-        <Clock className="w-4 h-4" />
+    <div className="flex flex-col md:flex-row items-start md:items-center gap-0 md:gap-3 mr-2 md:mr-6 text-[10px] sm:text-xs md:text-sm text-gray-500 md:text-gray-600 font-medium md:bg-gray-50/80 md:px-4 md:py-1.5 rounded-full md:border border-gray-100 leading-tight">
+      <div className="flex items-center gap-1 md:gap-1.5 text-blue-600 md:text-blue-700">
+        <Clock className="w-3 h-3 md:w-4 md:h-4" />
         <span dir="ltr">{timeString}</span>
       </div>
-      <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
-      <div className="text-gray-700">{hebrewDate}</div>
+      <div className="hidden md:block w-1 h-1 bg-gray-300 rounded-full"></div>
+      <div className="text-gray-600 md:text-gray-700">{hebrewDate}</div>
     </div>
   );
 }
