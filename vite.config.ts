@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'מועצה דתית עכו - ניהול חופשות',
-        short_name: 'חופשות עכו',
-        description: 'מערכת ניהול חופשות - המועצה הדתית עכו',
+        name: 'המועצה הדתית עכו',
+        short_name: 'המועצה הדתית עכו',
+        description: 'בקשת חופשה - המועצה הדתית עכו',
         theme_color: '#2563eb',
         background_color: '#f9fafb',
         display: 'standalone',
