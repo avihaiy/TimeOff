@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useStore } from '../lib/store';
+import SignatureCanvas from 'react-signature-canvas';
 import { getBusinessDaysCount } from '../lib/utils';
 import { format, eachDayOfInterval, isBefore, startOfDay } from 'date-fns';
 import { Calendar, Clock, CheckCircle, XCircle, Briefcase, CalendarOff, CalendarPlus, Megaphone } from 'lucide-react';
@@ -21,6 +22,7 @@ export function EmployeeDashboard() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [error, setError] = useState('');
+  const signatureRef = useRef<SignatureCanvas>(null);
 
   const myRequests = requests.filter(r => r.userId === currentUser?.id).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   
@@ -98,10 +100,17 @@ export function EmployeeDashboard() {
       return;
     }
 
+    if (signatureRef.current?.isEmpty()) {
+      setError('יש לחתום על הבקשה');
+      return;
+    }
+
     if (currentUser) {
-      addRequest(currentUser.id, startDate, endDate);
+      const signatureData = signatureRef.current?.toDataURL();
+      addRequest(currentUser.id, startDate, endDate, signatureData);
       setStartDate('');
       setEndDate('');
+      signatureRef.current?.clear();
     }
   };
 
@@ -200,6 +209,26 @@ export function EmployeeDashboard() {
                   onChange={(e) => setEndDate(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 flex justify-between">
+                  <span>חתימת עובד</span>
+                  <button 
+                    type="button" 
+                    onClick={() => signatureRef.current?.clear()}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    נקה
+                  </button>
+                </label>
+                <div className="border border-gray-300 rounded-lg overflow-hidden bg-gray-50">
+                  <SignatureCanvas 
+                    ref={signatureRef}
+                    canvasProps={{ className: 'w-full h-32 cursor-crosshair' }}
+                    backgroundColor="rgb(249,250,251)"
+                  />
+                </div>
               </div>
 
               {error && (

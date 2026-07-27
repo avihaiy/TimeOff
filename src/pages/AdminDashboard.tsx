@@ -213,6 +213,7 @@ export function AdminDashboard() {
                       <th className="px-6 py-3 text-sm font-semibold text-gray-600">מתאריך</th>
                       <th className="px-6 py-3 text-sm font-semibold text-gray-600">עד תאריך</th>
                       <th className="px-6 py-3 text-sm font-semibold text-gray-600">הוגש ב</th>
+                      <th className="px-6 py-3 text-sm font-semibold text-gray-600">חתימה</th>
                       <th className="px-6 py-3 text-sm font-semibold text-gray-600">סטטוס</th>
                       <th className="px-6 py-3 text-sm font-semibold text-gray-600 print:hidden">פעולות</th>
                     </tr>
@@ -240,6 +241,13 @@ export function AdminDashboard() {
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500">
                               {format(new Date(req.createdAt), 'dd/MM/yyyy HH:mm')}
+                            </td>
+                            <td className="px-6 py-4">
+                              {req.signature ? (
+                                <img src={req.signature} alt="חתימת עובד" className="h-8 max-w-[100px] object-contain bg-white rounded border border-gray-100" />
+                              ) : (
+                                <span className="text-xs text-gray-400">ללא</span>
+                              )}
                             </td>
                             <td className="px-6 py-4">
                               {getStatusBadge(req.status)}

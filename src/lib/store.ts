@@ -17,6 +17,7 @@ export interface VacationRequest {
   userId: string;
   startDate: string; 
   endDate: string; 
+  signature?: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
 }
@@ -40,7 +41,7 @@ interface AppState {
   logout: () => void;
   addUser: (name: string, username: string, password: string | undefined, role: Role, annualQuota: number) => Promise<void>;
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
-  addRequest: (userId: string, startDate: string, endDate: string) => Promise<void>;
+  addRequest: (userId: string, startDate: string, endDate: string, signature?: string) => Promise<void>;
   updateRequestStatus: (requestId: string, status: 'approved' | 'rejected' | 'pending') => Promise<void>;
   deleteRequest: (requestId: string) => Promise<void>;
   addAnnouncement: (title: string, content: string) => Promise<void>;
@@ -62,6 +63,7 @@ const mapRequest = (dbReq: any): VacationRequest => ({
   userId: dbReq.user_id,
   startDate: dbReq.start_date,
   endDate: dbReq.end_date,
+  signature: dbReq.signature,
   status: dbReq.status,
   createdAt: dbReq.created_at,
 });
@@ -163,7 +165,7 @@ export const useStore = create<AppState>()((set) => ({
     }
   },
 
-  addRequest: async (userId, startDate, endDate) => {
+  addRequest: async (userId, startDate, endDate, signature) => {
     try {
       const { data, error } = await supabase
         .from('vacation_requests')
@@ -171,6 +173,7 @@ export const useStore = create<AppState>()((set) => ({
           user_id: userId,
           start_date: startDate,
           end_date: endDate,
+          signature: signature,
           status: 'pending'
         }])
         .select()
