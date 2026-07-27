@@ -3,6 +3,7 @@ import { useStore, type Role } from '../lib/store';
 import { format } from 'date-fns';
 import { ShieldCheck, UserPlus, XCircle, CheckCircle, Clock, Printer, KeySquare, Download } from 'lucide-react';
 import { VacationCalendar } from '../components/VacationCalendar';
+import { AdminStats } from '../components/AdminStats';
 import { getBusinessDaysCount } from '../lib/utils';
 
 export function AdminDashboard() {
@@ -106,6 +107,7 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-8 print:space-y-0">
+      <AdminStats />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
