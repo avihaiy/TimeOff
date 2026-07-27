@@ -1,24 +1,44 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useStore } from '../lib/store';
 import SignatureCanvas from 'react-signature-canvas';
 import { getBusinessDaysCount } from '../lib/utils';
 import { format, eachDayOfInterval, isBefore, startOfDay } from 'date-fns';
-import { Calendar, Megaphone } from 'lucide-react';
+import { Calendar, Megaphone, Briefcase } from 'lucide-react';
+import { DayPicker } from 'react-day-picker';
+import type { DateRange } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
 
 export function PublicRequestForm() {
   const addRequest = useStore((state) => state.addRequest);
   const requests = useStore((state) => state.requests);
   const announcements = useStore((state) => state.announcements);
+  const users = useStore((state) => state.users);
   
   const [employeeName, setEmployeeName] = useState('');
   const [employeeId, setEmployeeId] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const signatureRef = useRef<SignatureCanvas>(null);
   
   const approvedRequests = requests.filter(r => r.status === 'approved');
+
+  // Compute disabled dates (all approved requests dates)
+  const disabledDays = useMemo(() => {
+    const days: Date[] = [];
+    approvedRequests.forEach(req => {
+      try {
+        const interval = eachDayOfInterval({
+          start: new Date(req.startDate),
+          end: new Date(req.endDate)
+        });
+        days.push(...interval);
+      } catch (e) {
+        // invalid date
+      }
+    });
+    return days;
+  }, [approvedRequests]);
 
   const checkAvailability = (start: string, end: string) => {
     try {
@@ -44,6 +64,32 @@ export function PublicRequestForm() {
     }
   };
 
+  // Live calculated remaining days
+  const employeeUser = useMemo(() => {
+    if (!employeeId) return null;
+    return users.find(u => u.username === employeeId);
+  }, [employeeId, users]);
+
+  const quotaInfo = useMemo(() => {
+    if (!employeeUser) return null;
+    const currentYear = new Date().getFullYear();
+    const myApprovedRequests = requests.filter(r => 
+      r.status === 'approved' && 
+      (r.userId === employeeUser.id || r.employeeId === employeeId) &&
+      new Date(r.startDate).getFullYear() === currentYear
+    );
+    
+    const usedDays = myApprovedRequests.reduce((total, req) => {
+      return total + getBusinessDaysCount(new Date(req.startDate), new Date(req.endDate));
+    }, 0);
+    
+    return {
+      annualQuota: employeeUser.annualQuota,
+      usedDays,
+      remainingDays: employeeUser.annualQuota - usedDays
+    };
+  }, [employeeUser, employeeId, requests]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -54,30 +100,43 @@ export function PublicRequestForm() {
       return;
     }
 
-    if (!startDate || !endDate) {
-      setError('יש לבחור תאריכי התחלה וסיום');
+    if (!employeeUser) {
+      setError('תעודת הזהות לא קיימת במערכת. אנא פנה למנהל להוספת העובד.');
       return;
     }
 
-    if (isBefore(new Date(endDate), new Date(startDate))) {
+    if (!dateRange?.from || !dateRange?.to) {
+      setError('יש לבחור טווח תאריכים ביומן');
+      return;
+    }
+
+    const startStr = format(dateRange.from, 'yyyy-MM-dd');
+    const endStr = format(dateRange.to, 'yyyy-MM-dd');
+
+    if (isBefore(dateRange.to, dateRange.from)) {
       setError('תאריך הסיום חייב להיות אחרי תאריך ההתחלה');
       return;
     }
 
-    if (isBefore(new Date(startDate), startOfDay(new Date()))) {
+    if (isBefore(startOfDay(dateRange.from), startOfDay(new Date()))) {
       setError('לא ניתן לבקש חופשה לתאריכי עבר');
       return;
     }
 
-    const requestedBusinessDays = getBusinessDaysCount(new Date(startDate), new Date(endDate));
+    const requestedBusinessDays = getBusinessDaysCount(dateRange.from, dateRange.to);
     
     if (requestedBusinessDays === 0) {
       setError('הבקשה לא כוללת ימי עבודה (ימים א-ה)');
       return;
     }
 
-    if (!checkAvailability(startDate, endDate)) {
-      setError('אחד או יותר מהימים המבוקשים כבר תפוסים על ידי עובד אחר (המערכת מתירה רק עובד אחד בחופשה בכל יום)');
+    if (quotaInfo && requestedBusinessDays > quotaInfo.remainingDays) {
+      setError(`חריגה ממכסת החופשות: ביקשת ${requestedBusinessDays} ימים, אך נותרו לך ${quotaInfo.remainingDays} ימים בלבד.`);
+      return;
+    }
+
+    if (!checkAvailability(startStr, endStr)) {
+      setError('אחד או יותר מהימים המבוקשים כבר תפוסים על ידי עובד אחר');
       return;
     }
 
@@ -87,12 +146,11 @@ export function PublicRequestForm() {
     }
 
     const signatureData = signatureRef.current?.toDataURL();
-    addRequest(null, employeeName, employeeId, startDate, endDate, signatureData);
+    addRequest(employeeUser.id, employeeName, employeeId, startStr, endStr, signatureData);
     
     setEmployeeName('');
     setEmployeeId('');
-    setStartDate('');
-    setEndDate('');
+    setDateRange(undefined);
     signatureRef.current?.clear();
     setSuccess(true);
     
@@ -121,6 +179,20 @@ export function PublicRequestForm() {
         </div>
       )}
 
+      {quotaInfo && (
+        <div className="bg-white rounded-2xl shadow-sm border border-emerald-100 p-6 flex items-center gap-4">
+          <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+            <Briefcase className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500 mb-1">יתרת ימי חופשה לעובד</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {quotaInfo.remainingDays} ימים <span className="text-sm font-normal text-gray-500">מתוך {quotaInfo.annualQuota}</span>
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
           <Calendar className="w-5 h-5 text-blue-600" />
@@ -144,7 +216,7 @@ export function PublicRequestForm() {
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">שם מלא</label>
@@ -171,28 +243,19 @@ export function PublicRequestForm() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">תאריך התחלה</label>
-                <input
-                  type="date"
-                  required
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">תאריכי חופשה (בחר מהיומן)</label>
+              <div className="border border-gray-200 rounded-xl p-4 bg-gray-50 flex justify-center" dir="ltr">
+                <DayPicker
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  disabled={disabledDays}
+                  showOutsideDays
+                  className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
                 />
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">תאריך סיום</label>
-                <input
-                  type="date"
-                  required
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                />
-              </div>
+              <p className="text-xs text-gray-500 mt-2">* ימים אפורים הם ימים שכבר נתפסו על ידי עובד אחר ומאושרים במערכת.</p>
             </div>
 
             <div>
