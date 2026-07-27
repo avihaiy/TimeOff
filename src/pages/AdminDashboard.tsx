@@ -504,7 +504,7 @@ export function AdminDashboard() {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                 <KeySquare className="w-5 h-5 text-blue-600" />
-                איפוס סיסמה לעובד
+                החלפת סיסמה (עובד / מנהל)
               </h2>
               
               <form onSubmit={handleChangePassword} className="space-y-4">
