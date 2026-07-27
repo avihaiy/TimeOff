@@ -4,3 +4,17 @@ body {
   background-color: #f9fafb;
   color: #111827;
 }
+
+/* Make DayPicker fully responsive */
+.rdp {
+  --rdp-cell-size: 38px;
+  --rdp-accent-color: #2563eb;
+  --rdp-background-color: #eff6ff;
+  margin: 0 !important;
+}
+
+@media (min-width: 640px) {
+  .rdp {
+    --rdp-cell-size: 45px;
+  }
+}

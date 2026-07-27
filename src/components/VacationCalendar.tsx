@@ -53,13 +53,12 @@ export function VacationCalendar() {
         }
       `}</style>
       
-      <div className="w-full overflow-x-auto flex justify-center pb-2">
-        <div className="min-w-max">
-          <DayPicker
-            mode="multiple"
-            locale={he}
-            dir="rtl"
-            modifiers={{ booked: isBooked }}
+      <div className="w-full flex justify-center pb-2">
+        <DayPicker
+          mode="multiple"
+          locale={he}
+          dir="rtl"
+          modifiers={{ booked: isBooked }}
         modifiersClassNames={{ booked: 'booked-day' }}
         onDayClick={() => {}} // Disabled selection
         disabled={() => true} // Disable clicking entirely for the calendar view
@@ -99,7 +98,6 @@ export function VacationCalendar() {
           }
         }}
       />
-        </div>
       </div>
     </div>
   );
