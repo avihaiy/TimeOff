@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useStore } from '../lib/store';
-import { LogOut, Calendar } from 'lucide-react';
+import { LogOut, Calendar, Download } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -7,6 +8,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const logout = useStore((state) => state.logout);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) return;
+    const result = await installPrompt.prompt();
+    if (result.outcome === 'accepted') {
+      setInstallPrompt(null);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -30,6 +50,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span className="text-sm text-gray-600 dark:text-gray-300">
                   שלום, <span className="font-semibold text-gray-900 dark:text-white">{currentUser.name}</span>
                 </span>
+
+                {installPrompt && (
+                  <button
+                    onClick={handleInstallClick}
+                    className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-colors border border-emerald-200"
+                    title="התקן אפליקציה למכשיר"
+                  >
+                    <Download className="w-4 h-4" />
+                    התקן אפליקציה
+                  </button>
+                )}
                 
                 {currentUser.role === 'admin' && (
                   location.pathname === '/admin' ? (
