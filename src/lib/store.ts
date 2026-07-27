@@ -55,7 +55,7 @@ const mapRequest = (dbReq: any): VacationRequest => ({
   createdAt: dbReq.created_at,
 });
 
-export const useStore = create<AppState>()((set, get) => ({
+export const useStore = create<AppState>()((set) => ({
   users: [],
   requests: [],
   currentUser: null,

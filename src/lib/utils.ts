@@ -1,4 +1,4 @@
-import { eachDayOfInterval, isWeekend } from 'date-fns';
+import { eachDayOfInterval } from 'date-fns';
 
 export function getBusinessDaysCount(startDate: Date, endDate: Date): number {
   try {
