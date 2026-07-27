@@ -17,6 +17,7 @@ export function AdminDashboard() {
   const updateUser = useStore((state) => state.updateUser);
   const deleteUser = useStore((state) => state.deleteUser);
   const updateUserPassword = useStore((state) => state.updateUserPassword);
+  const deleteRequest = useStore((state) => state.deleteRequest);
 
   const addAnnouncement = useStore((state) => state.addAnnouncement);
   const deleteAnnouncement = useStore((state) => state.deleteAnnouncement);
@@ -380,24 +381,33 @@ export function AdminDashboard() {
                               {getStatusBadge(req.status)}
                             </td>
                             <td className="px-3 py-3 print:hidden">
-                              {req.status === 'pending' ? (
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => updateRequestStatus(req.id, 'approved')}
-                                    className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-sm font-medium transition-colors"
-                                  >
-                                    אשר
-                                  </button>
-                                  <button
-                                    onClick={() => updateRequestStatus(req.id, 'rejected')}
-                                    className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors"
-                                  >
-                                    דחה
-                                  </button>
-                                </div>
-                              ) : (
-                                <span className="text-gray-400 text-sm">טופל</span>
-                              )}
+                              <div className="flex items-center gap-2">
+                                {req.status === 'pending' ? (
+                                  <>
+                                    <button
+                                      onClick={() => updateRequestStatus(req.id, 'approved')}
+                                      className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                      אשר
+                                    </button>
+                                    <button
+                                      onClick={() => updateRequestStatus(req.id, 'rejected')}
+                                      className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                      דחה
+                                    </button>
+                                  </>
+                                ) : (
+                                  <span className="text-gray-400 text-sm flex-1">טופל</span>
+                                )}
+                                <button
+                                  onClick={() => deleteRequest(req.id)}
+                                  className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                  title="מחק בקשה לצמיתות"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
