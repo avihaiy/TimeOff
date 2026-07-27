@@ -1,0 +1,49 @@
+import { useStore } from '../lib/store';
+import { LogOut, Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+export function Layout({ children }: { children: React.ReactNode }) {
+  const currentUser = useStore((state) => state.currentUser);
+  const logout = useStore((state) => state.logout);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900" dir="rtl">
+      <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-600 p-2 rounded-xl">
+                <Calendar className="h-6 w-6 text-white" />
+              </div>
+              <h1 className="text-xl font-bold text-gray-900 tracking-tight">המועצה הדתית עכו</h1>
+            </div>
+            
+            {currentUser && (
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  שלום, <span className="font-semibold text-gray-900 dark:text-white">{currentUser.name}</span>
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  התנתק
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </nav>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {children}
+      </main>
+    </div>
+  );
+}
