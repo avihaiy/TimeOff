@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../lib/store';
-import { LogOut, Calendar, Download, Clock, Sun, Moon } from 'lucide-react';
+import { LogOut, Download, Clock, Sun, Moon } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { HDate } from '@hebcal/core';
 
@@ -70,8 +70,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="bg-blue-600 p-2 rounded-xl">
-                <Calendar className="h-6 w-6 text-white" />
+              <div className="w-10 h-10 shrink-0">
+                <img src="/icon-192.png" alt="לוגו המועצה" className="w-full h-full object-contain drop-shadow-sm" />
               </div>
               <h1 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight whitespace-nowrap truncate max-w-[140px] sm:max-w-none">המועצה הדתית עכו</h1>
               <HebrewDateTime />
