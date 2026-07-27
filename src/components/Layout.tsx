@@ -1,7 +1,45 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../lib/store';
-import { LogOut, Calendar, Download } from 'lucide-react';
+import { LogOut, Calendar, Download, Clock } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+
+function HebrewDateTime() {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  let hebrewDate = '';
+  try {
+    hebrewDate = new Intl.DateTimeFormat('he-IL', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      calendar: 'hebrew'
+    }).format(time);
+  } catch (e) {
+    // Fallback if browser doesn't support hebrew calendar
+    hebrewDate = time.toLocaleDateString('he-IL');
+  }
+
+  const timeString = time.toLocaleTimeString('he-IL', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  return (
+    <div className="hidden md:flex items-center gap-3 mr-6 text-sm text-gray-600 font-medium bg-gray-50/80 px-4 py-1.5 rounded-full border border-gray-100">
+      <div className="flex items-center gap-1.5 text-blue-700">
+        <Clock className="w-4 h-4" />
+        <span dir="ltr">{timeString}</span>
+      </div>
+      <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
+      <div className="text-gray-700">{hebrewDate}</div>
+    </div>
+  );
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const currentUser = useStore((state) => state.currentUser);
@@ -43,6 +81,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Calendar className="h-6 w-6 text-white" />
               </div>
               <h1 className="text-xl font-bold text-gray-900 tracking-tight">המועצה הדתית עכו</h1>
+              <HebrewDateTime />
             </div>
             
             {currentUser ? (
