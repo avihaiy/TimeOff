@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useStore } from '../lib/store';
 import { LogOut, Calendar, Download, Clock } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { HDate } from '@hebcal/core';
 
 function HebrewDateTime() {
   const [time, setTime] = useState(new Date());
@@ -11,16 +12,8 @@ function HebrewDateTime() {
     return () => clearInterval(timer);
   }, []);
 
-  let hebrewDate = '';
-  try {
-    hebrewDate = new Intl.DateTimeFormat('he-IL', {
-      dateStyle: 'long',
-      calendar: 'hebrew'
-    }).format(time);
-  } catch (e) {
-    // Fallback if browser doesn't support hebrew calendar
-    hebrewDate = time.toLocaleDateString('he-IL');
-  }
+  // Get reliable Hebrew date using hebcal and remove vowels (niqqud)
+  const hebrewDate = new HDate(time).renderGematriya().replace(/[\u0591-\u05C7]/g, '');
 
   const timeString = time.toLocaleTimeString('he-IL', {
     hour: '2-digit',
