@@ -333,14 +333,14 @@ export function AdminDashboard() {
                 <table className="w-full text-right">
                   <thead className="bg-gray-50 border-b border-gray-200 print:bg-transparent">
                     <tr>
-                      <th className="px-6 py-3 text-sm font-semibold text-gray-600">שם עובד</th>
-                      <th className="px-6 py-3 text-sm font-semibold text-gray-600">ת.ז.</th>
-                      <th className="px-6 py-3 text-sm font-semibold text-gray-600">מתאריך</th>
-                      <th className="px-6 py-3 text-sm font-semibold text-gray-600">עד תאריך</th>
-                      <th className="px-6 py-3 text-sm font-semibold text-gray-600">הוגש ב</th>
-                      <th className="px-6 py-3 text-sm font-semibold text-gray-600">חתימה</th>
-                      <th className="px-6 py-3 text-sm font-semibold text-gray-600">סטטוס</th>
-                      <th className="px-6 py-3 text-sm font-semibold text-gray-600 print:hidden">פעולות</th>
+                      <th className="px-3 py-3 text-sm font-semibold text-gray-600">שם עובד</th>
+                      <th className="px-3 py-3 text-sm font-semibold text-gray-600">ת.ז.</th>
+                      <th className="px-3 py-3 text-sm font-semibold text-gray-600">מתאריך</th>
+                      <th className="px-3 py-3 text-sm font-semibold text-gray-600">עד תאריך</th>
+                      <th className="px-3 py-3 text-sm font-semibold text-gray-600">הוגש ב</th>
+                      <th className="px-3 py-3 text-sm font-semibold text-gray-600">חתימה</th>
+                      <th className="px-3 py-3 text-sm font-semibold text-gray-600">סטטוס</th>
+                      <th className="px-3 py-3 text-sm font-semibold text-gray-600 print:hidden">פעולות</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -354,32 +354,32 @@ export function AdminDashboard() {
                       requests.slice().sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((req) => {
                         return (
                           <tr key={req.id} className="hover:bg-gray-50/50 transition-colors">
-                            <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                            <td className="px-3 py-3 text-sm text-gray-900 font-medium">
                               {req.employeeName || 'משתמש לא ידוע'}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
+                            <td className="px-3 py-3 text-sm text-gray-500">
                               {req.employeeId || '-'}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-900">
+                            <td className="px-3 py-3 text-sm text-gray-900">
                               {format(new Date(req.startDate), 'dd/MM/yyyy')}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-900">
+                            <td className="px-3 py-3 text-sm text-gray-900">
                               {format(new Date(req.endDate), 'dd/MM/yyyy')}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
+                            <td className="px-3 py-3 text-sm text-gray-500">
                               {format(new Date(req.createdAt), 'dd/MM/yyyy HH:mm')}
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-3 py-3">
                               {req.signature ? (
                                 <img src={req.signature} alt="חתימת עובד" className="h-8 max-w-[100px] object-contain bg-white rounded border border-gray-100" />
                               ) : (
                                 <span className="text-xs text-gray-400">ללא</span>
                               )}
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-3 py-3">
                               {getStatusBadge(req.status)}
                             </td>
-                            <td className="px-6 py-4 print:hidden">
+                            <td className="px-3 py-3 print:hidden">
                               {req.status === 'pending' ? (
                                 <div className="flex gap-2">
                                   <button
@@ -441,12 +441,12 @@ export function AdminDashboard() {
               <table className="w-full text-right">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-3 text-sm font-semibold text-gray-600">שם עובד</th>
-                    <th className="px-6 py-3 text-sm font-semibold text-gray-600">תעודת זהות</th>
-                    <th className="px-6 py-3 text-sm font-semibold text-gray-600 text-center">מכסה שנתית</th>
-                    <th className="px-6 py-3 text-sm font-semibold text-gray-600 text-center">נוצלו השנה</th>
-                    <th className="px-6 py-3 text-sm font-semibold text-gray-600 text-center">יתרה</th>
-                    <th className="px-6 py-3 text-sm font-semibold text-gray-600 text-center">פעולות</th>
+                    <th className="px-3 py-3 text-sm font-semibold text-gray-600">שם עובד</th>
+                    <th className="px-3 py-3 text-sm font-semibold text-gray-600">תעודת זהות</th>
+                    <th className="px-3 py-3 text-sm font-semibold text-gray-600 text-center">מכסה שנתית</th>
+                    <th className="px-3 py-3 text-sm font-semibold text-gray-600 text-center">נוצלו השנה</th>
+                    <th className="px-3 py-3 text-sm font-semibold text-gray-600 text-center">יתרה</th>
+                    <th className="px-3 py-3 text-sm font-semibold text-gray-600 text-center">פעולות</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -494,8 +494,8 @@ export function AdminDashboard() {
                               className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm text-center"
                             />
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-500 text-center">{usedDays}</td>
-                          <td className="px-6 py-4 text-sm font-semibold text-emerald-600 text-center">{remainingDays}</td>
+                          <td className="px-3 py-3 text-sm text-gray-500 text-center">{usedDays}</td>
+                          <td className="px-3 py-3 text-sm font-semibold text-emerald-600 text-center">{remainingDays}</td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <button
@@ -517,11 +517,11 @@ export function AdminDashboard() {
                         </tr>
                       ) : (
                         <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{user.name}</td>
-                          <td className="px-6 py-4 text-sm text-gray-500">{user.username}</td>
-                          <td className="px-6 py-4 text-sm text-gray-900 text-center">{user.annualQuota}</td>
-                          <td className="px-6 py-4 text-sm text-gray-500 text-center">{usedDays}</td>
-                          <td className="px-6 py-4 text-sm font-semibold text-emerald-600 text-center">{remainingDays}</td>
+                          <td className="px-3 py-3 text-sm font-medium text-gray-900">{user.name}</td>
+                          <td className="px-3 py-3 text-sm text-gray-500">{user.username}</td>
+                          <td className="px-3 py-3 text-sm text-gray-900 text-center">{user.annualQuota}</td>
+                          <td className="px-3 py-3 text-sm text-gray-500 text-center">{usedDays}</td>
+                          <td className="px-3 py-3 text-sm font-semibold text-emerald-600 text-center">{remainingDays}</td>
                           <td className="px-4 py-4 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <button
