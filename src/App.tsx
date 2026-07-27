@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useStore } from './lib/store';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
-import { EmployeeDashboard } from './pages/EmployeeDashboard';
+import { PublicRequestForm } from './pages/PublicRequestForm';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { useEffect } from 'react';
 
@@ -45,15 +45,6 @@ function App() {
         <Route path="/login" element={<Login />} />
         
         <Route 
-          path="/employee" 
-          element={
-            <ProtectedRoute>
-              <EmployeeDashboard />
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
           path="/admin" 
           element={
             <ProtectedRoute role="admin">
@@ -65,10 +56,12 @@ function App() {
         <Route 
           path="/" 
           element={
-            currentUser ? (
-              <Navigate to={currentUser.role === 'admin' ? '/admin' : '/employee'} replace />
+            currentUser?.role === 'admin' ? (
+              <Navigate to="/admin" replace />
             ) : (
-              <Navigate to="/login" replace />
+              <Layout>
+                <PublicRequestForm />
+              </Layout>
             )
           } 
         />

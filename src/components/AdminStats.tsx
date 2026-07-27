@@ -52,21 +52,22 @@ export function AdminStats() {
   }, [approvedRequestsThisYear]);
 
   const employeeData = useMemo(() => {
-    const userDays: Record<string, number> = {};
+    const userDays: Record<string, { days: number, name: string }> = {};
 
     approvedRequestsThisYear.forEach(req => {
       const days = getBusinessDaysCount(new Date(req.startDate), new Date(req.endDate));
-      userDays[req.userId] = (userDays[req.userId] || 0) + days;
+      const key = req.employeeId || req.userId || 'unknown';
+      if (!userDays[key]) {
+        userDays[key] = { days: 0, name: req.employeeName || users.find(u => u.id === req.userId)?.name || 'לא ידוע' };
+      }
+      userDays[key].days += days;
     });
 
-    return Object.entries(userDays)
-      .map(([userId, days]) => {
-        const user = users.find(u => u.id === userId);
-        return {
-          name: user ? user.name : 'לא ידוע',
-          value: days
-        };
-      })
+    return Object.values(userDays)
+      .map((user) => ({
+        name: user.name,
+        value: user.days
+      }))
       .filter(item => item.value > 0)
       .sort((a, b) => b.value - a.value);
   }, [approvedRequestsThisYear, users]);

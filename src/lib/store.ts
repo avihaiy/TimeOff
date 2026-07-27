@@ -14,7 +14,9 @@ export interface User {
 
 export interface VacationRequest {
   id: string;
-  userId: string;
+  userId: string | null;
+  employeeName?: string;
+  employeeId?: string;
   startDate: string; 
   endDate: string; 
   signature?: string;
@@ -41,7 +43,7 @@ interface AppState {
   logout: () => void;
   addUser: (name: string, username: string, password: string | undefined, role: Role, annualQuota: number) => Promise<void>;
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
-  addRequest: (userId: string, startDate: string, endDate: string, signature?: string) => Promise<void>;
+  addRequest: (userId: string | null, employeeName: string, employeeId: string, startDate: string, endDate: string, signature?: string) => Promise<void>;
   updateRequestStatus: (requestId: string, status: 'approved' | 'rejected' | 'pending') => Promise<void>;
   deleteRequest: (requestId: string) => Promise<void>;
   addAnnouncement: (title: string, content: string) => Promise<void>;
@@ -61,6 +63,8 @@ const mapUser = (dbUser: any): User => ({
 const mapRequest = (dbReq: any): VacationRequest => ({
   id: dbReq.id,
   userId: dbReq.user_id,
+  employeeName: dbReq.employee_name,
+  employeeId: dbReq.employee_id,
   startDate: dbReq.start_date,
   endDate: dbReq.end_date,
   signature: dbReq.signature,
@@ -165,12 +169,14 @@ export const useStore = create<AppState>()((set) => ({
     }
   },
 
-  addRequest: async (userId, startDate, endDate, signature) => {
+  addRequest: async (userId, employeeName, employeeId, startDate, endDate, signature) => {
     try {
       const { data, error } = await supabase
         .from('vacation_requests')
         .insert([{
           user_id: userId,
+          employee_name: employeeName,
+          employee_id: employeeId,
           start_date: startDate,
           end_date: endDate,
           signature: signature,

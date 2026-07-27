@@ -45,7 +45,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <h1 className="text-xl font-bold text-gray-900 tracking-tight">המועצה הדתית עכו</h1>
             </div>
             
-            {currentUser && (
+            {currentUser ? (
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-600 dark:text-gray-300">
                   שלום, <span className="font-semibold text-gray-900 dark:text-white">{currentUser.name}</span>
@@ -87,6 +87,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <LogOut className="w-4 h-4" />
                   התנתק
                 </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4">
+                {installPrompt && (
+                  <button
+                    onClick={handleInstallClick}
+                    className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-colors border border-emerald-200"
+                    title="התקן אפליקציה למכשיר"
+                  >
+                    <Download className="w-4 h-4" />
+                    התקן אפליקציה
+                  </button>
+                )}
+                <Link
+                  to="/login"
+                  className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
+                >
+                  כניסת מנהל
+                </Link>
               </div>
             )}
           </div>

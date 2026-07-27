@@ -90,12 +90,12 @@ export function AdminDashboard() {
       return;
     }
 
-    const headers = ['שם עובד', 'מתאריך', 'עד תאריך', 'סך ימי חופשה'];
+    const headers = ['שם עובד', 'ת.ז.', 'מתאריך', 'עד תאריך', 'סך ימי חופשה'];
     const rows = filteredRequests.map(req => {
-      const user = users.find(u => u.id === req.userId);
       const days = getBusinessDaysCount(new Date(req.startDate), new Date(req.endDate));
       return [
-        user?.name || 'לא ידוע',
+        req.employeeName || 'לא ידוע',
+        req.employeeId || '-',
         format(new Date(req.startDate), 'dd/MM/yyyy'),
         format(new Date(req.endDate), 'dd/MM/yyyy'),
         days.toString()
@@ -210,6 +210,7 @@ export function AdminDashboard() {
                   <thead className="bg-gray-50 border-b border-gray-200 print:bg-transparent">
                     <tr>
                       <th className="px-6 py-3 text-sm font-semibold text-gray-600">שם עובד</th>
+                      <th className="px-6 py-3 text-sm font-semibold text-gray-600">ת.ז.</th>
                       <th className="px-6 py-3 text-sm font-semibold text-gray-600">מתאריך</th>
                       <th className="px-6 py-3 text-sm font-semibold text-gray-600">עד תאריך</th>
                       <th className="px-6 py-3 text-sm font-semibold text-gray-600">הוגש ב</th>
@@ -227,11 +228,13 @@ export function AdminDashboard() {
                       </tr>
                     ) : (
                       requests.slice().sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((req) => {
-                        const user = users.find(u => u.id === req.userId);
                         return (
                           <tr key={req.id} className="hover:bg-gray-50/50 transition-colors">
                             <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                              {user?.name || 'משתמש לא ידוע'}
+                              {req.employeeName || 'משתמש לא ידוע'}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {req.employeeId || '-'}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-900">
                               {format(new Date(req.startDate), 'dd/MM/yyyy')}
