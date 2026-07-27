@@ -259,11 +259,13 @@ export function PublicRequestForm() {
                   selected={dateRange}
                   onSelect={setDateRange}
                   disabled={disabledDays}
+                  modifiers={{ taken: disabledDays }}
+                  modifiersStyles={{ taken: { color: '#ef4444', backgroundColor: '#fef2f2', textDecoration: 'line-through', fontWeight: 'bold' } }}
                   showOutsideDays
                   className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-2">* ימים אפורים הם ימים שכבר נתפסו על ידי עובד אחר ומאושרים במערכת.</p>
+              <p className="text-xs text-gray-500 mt-2">* ימים המסומנים באדום הם ימים שכבר נתפסו על ידי עובד אחר ומאושרים במערכת.</p>
             </div>
 
             <div>
