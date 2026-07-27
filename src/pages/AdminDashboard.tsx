@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useStore, type Role } from '../lib/store';
 import { format } from 'date-fns';
 import { CheckCircle, Clock, Download, Printer, ShieldCheck, XCircle, Users, Megaphone, CalendarDays, KeySquare, UserPlus, Edit, Trash2, X, Save, Upload } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { VacationCalendar } from '../components/VacationCalendar';
 import { AdminStats } from '../components/AdminStats';
 import { getBusinessDaysCount } from '../lib/utils';
@@ -25,6 +26,21 @@ export function AdminDashboard() {
   const announcements = useStore((state) => state.announcements);
 
   const [activeTab, setActiveTab] = useState<AdminTab>('vacations');
+
+  const handleStatusChange = (reqId: string, newStatus: 'approved' | 'rejected') => {
+    updateRequestStatus(reqId, newStatus);
+    if (newStatus === 'approved') {
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#ffffff']
+      });
+      toast.success('בקשת החופשה אושרה בהצלחה!');
+    } else {
+      toast.success('בקשת החופשה נדחתה');
+    }
+  };
 
   const [newUserName, setNewUserName] = useState('');
   const [newUserUsername, setNewUserUsername] = useState('');
@@ -386,13 +402,13 @@ export function AdminDashboard() {
                                 {req.status === 'pending' ? (
                                   <>
                                     <button
-                                      onClick={() => updateRequestStatus(req.id, 'approved')}
+                                      onClick={() => handleStatusChange(req.id, 'approved')}
                                       className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-sm font-medium transition-colors"
                                     >
                                       אשר
                                     </button>
                                     <button
-                                      onClick={() => updateRequestStatus(req.id, 'rejected')}
+                                      onClick={() => handleStatusChange(req.id, 'rejected')}
                                       className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors"
                                     >
                                       דחה
