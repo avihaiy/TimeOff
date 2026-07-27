@@ -3,6 +3,7 @@ import { useStore } from '../lib/store';
 import { LogOut, Download, Clock, Sun, Moon } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { HDate } from '@hebcal/core';
+import { motion } from 'framer-motion';
 
 function HebrewDateTime() {
   const [time, setTime] = useState(new Date());
@@ -162,7 +163,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </nav>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+        >
+          {children}
+        </motion.div>
       </main>
     </div>
   );

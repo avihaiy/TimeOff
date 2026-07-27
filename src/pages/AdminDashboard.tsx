@@ -2,6 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useStore, type Role } from '../lib/store';
 import { format } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Clock, Download, Printer, ShieldCheck, XCircle, Users, Megaphone, CalendarDays, KeySquare, UserPlus, Edit, Trash2, X, Save, Upload } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { VacationCalendar } from '../components/VacationCalendar';
@@ -302,8 +303,16 @@ export function AdminDashboard() {
         </button>
       </div>
 
+      <AnimatePresence mode="wait">
       {activeTab === 'vacations' && (
-        <div className="space-y-8 print:space-y-0">
+        <motion.div 
+          key="vacations"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+          className="space-y-8 print:space-y-0"
+        >
           <AdminStats />
           
           <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 gap-8">
@@ -435,12 +444,19 @@ export function AdminDashboard() {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Users Management Section */}
       {activeTab === 'users' && (
-        <div className="space-y-8 print:hidden">
+        <motion.div 
+          key="users"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+          className="space-y-8 print:hidden"
+        >
           {/* Employee Pool Table */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -700,12 +716,19 @@ export function AdminDashboard() {
               </form>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Announcements Section */}
       {activeTab === 'announcements' && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 print:hidden">
+        <motion.div 
+          key="announcements"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 print:hidden"
+        >
           <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
             <span className="text-blue-600">📢</span> לוח מודעות
           </h2>
@@ -774,9 +797,10 @@ export function AdminDashboard() {
               </div>
             )}
           </div>
-        </div>
-      </div>
+          </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }
