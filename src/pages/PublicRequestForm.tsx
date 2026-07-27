@@ -253,17 +253,19 @@ export function PublicRequestForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">תאריכי חופשה (בחר מהיומן)</label>
-              <div className="border border-gray-200 rounded-xl p-4 bg-gray-50 flex justify-center" dir="ltr">
-                <DayPicker
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={setDateRange}
-                  disabled={disabledDays}
-                  modifiers={{ taken: disabledDays }}
-                  modifiersStyles={{ taken: { color: '#ef4444', backgroundColor: '#fef2f2', textDecoration: 'line-through', fontWeight: 'bold' } }}
-                  showOutsideDays
-                  className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
-                />
+              <div className="border border-gray-200 rounded-xl p-1 sm:p-4 bg-gray-50 flex justify-center overflow-x-auto w-full" dir="ltr">
+                <div className="min-w-max">
+                  <DayPicker
+                    mode="range"
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    disabled={disabledDays}
+                    modifiers={{ taken: disabledDays }}
+                    modifiersStyles={{ taken: { color: '#ef4444', backgroundColor: '#fef2f2', textDecoration: 'line-through', fontWeight: 'bold' } }}
+                    showOutsideDays
+                    className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100"
+                  />
+                </div>
               </div>
               <p className="text-xs text-gray-500 mt-2">* ימים המסומנים באדום הם ימים שכבר נתפסו על ידי עובד אחר ומאושרים במערכת.</p>
             </div>
