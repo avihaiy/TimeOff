@@ -3,6 +3,7 @@ import { useStore } from '../lib/store';
 import SignatureCanvas from 'react-signature-canvas';
 import { getBusinessDaysCount } from '../lib/utils';
 import { format, eachDayOfInterval, isBefore, startOfDay } from 'date-fns';
+import { he } from 'date-fns/locale';
 import { Calendar, Megaphone, Briefcase } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
 import type { DateRange } from 'react-day-picker';
@@ -253,9 +254,11 @@ export function PublicRequestForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">תאריכי חופשה (בחר מהיומן)</label>
-              <div className="border border-gray-200 rounded-xl p-2 sm:p-4 bg-gray-50 flex justify-center w-full" dir="ltr">
+              <div className="border border-gray-200 rounded-xl p-2 sm:p-4 bg-gray-50 flex justify-center w-full" dir="rtl">
                 <DayPicker
                   mode="range"
+                  locale={he}
+                  dir="rtl"
                   selected={dateRange}
                   onSelect={setDateRange}
                   disabled={disabledDays}
