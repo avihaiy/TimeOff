@@ -78,7 +78,9 @@ export function VacationCalendar() {
           DayButton: (props) => {
             const { day, modifiers, ...buttonProps } = props as any;
             const hd = new HDate(day.date);
-            const hebrewDay = hd.renderGematriya().split(' ')[0];
+            const gematriyaParts = hd.renderGematriya().split(' ');
+            gematriyaParts.pop(); // Remove the year
+            const hebrewDateStr = gematriyaParts.join(' ');
             const isHoliday = isJewishHoliday(day.date);
             
             if (isHoliday) {
@@ -91,7 +93,7 @@ export function VacationCalendar() {
                 className={`${buttonProps.className || ''} flex flex-col items-center justify-center relative`}
               >
                 <span className="font-medium">{day.date.getDate()}</span>
-                <span className="text-[10px] opacity-70 leading-none mt-0.5">{hebrewDay}</span>
+                <span className="text-[9px] sm:text-[10px] opacity-70 leading-none mt-0.5 whitespace-nowrap">{hebrewDateStr}</span>
                 {isHoliday && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-blue-400 rounded-full"></span>}
               </button>
             );
