@@ -1,7 +1,8 @@
 import { useState, useRef, useMemo } from 'react';
 import { useStore } from '../lib/store';
 import SignatureCanvas from 'react-signature-canvas';
-import { getBusinessDaysCount } from '../lib/utils';
+import { getBusinessDaysCount, isJewishHoliday } from '../lib/utils';
+import { HDate } from '@hebcal/core';
 import { format, eachDayOfInterval, isBefore, startOfDay } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { Calendar, Megaphone, Briefcase } from 'lucide-react';
@@ -266,6 +267,29 @@ export function PublicRequestForm() {
                   modifiersStyles={{ taken: { color: '#ef4444', backgroundColor: '#fef2f2', textDecoration: 'line-through', fontWeight: 'bold' } }}
                   showOutsideDays
                   className="bg-white p-2 sm:p-4 rounded-lg shadow-sm border border-gray-100"
+                  components={{
+                    DayButton: (props) => {
+                      const { day, modifiers, ...buttonProps } = props as any;
+                      const hd = new HDate(day.date);
+                      const hebrewDay = hd.renderGematriya().split(' ')[0];
+                      const isHoliday = isJewishHoliday(day.date);
+                      
+                      if (isHoliday) {
+                        buttonProps.title = 'חג / שבתון';
+                      }
+
+                      return (
+                        <button 
+                          {...buttonProps} 
+                          className={`${buttonProps.className || ''} flex flex-col items-center justify-center relative`}
+                        >
+                          <span className="font-medium">{day.date.getDate()}</span>
+                          <span className="text-[10px] opacity-70 leading-none mt-0.5">{hebrewDay}</span>
+                          {isHoliday && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-blue-400 rounded-full"></span>}
+                        </button>
+                      );
+                    }
+                  }}
                 />
               </div>
               <p className="text-xs text-gray-500 mt-2">* ימים המסומנים באדום הם ימים שכבר נתפסו על ידי עובד אחר ומאושרים במערכת.</p>
