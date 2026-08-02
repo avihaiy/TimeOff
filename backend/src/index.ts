@@ -22,9 +22,9 @@ app.post('/users', async (c) => {
   const body = await c.req.json()
   const id = crypto.randomUUID()
   await c.env.DB.prepare(
-    'INSERT INTO vacation_users (id, name, username, password, role, annual_quota) VALUES (?, ?, ?, ?, ?, ?)'
+    'INSERT INTO vacation_users (id, name, username, password, role, annual_quota, email) VALUES (?, ?, ?, ?, ?, ?, ?)'
   )
-    .bind(id, body.name, body.username, body.password, body.role, body.annualQuota || 14)
+    .bind(id, body.name, body.username, body.password, body.role, body.annualQuota || 14, body.email || null)
     .run()
     
   return c.json({ success: true, id })

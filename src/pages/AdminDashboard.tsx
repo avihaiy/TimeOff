@@ -46,6 +46,7 @@ export function AdminDashboard() {
   const [newUserName, setNewUserName] = useState('');
   const [newUserUsername, setNewUserUsername] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState<Role>('employee');
   const [newUserQuota, setNewUserQuota] = useState<number>(14);
 
@@ -78,10 +79,11 @@ export function AdminDashboard() {
         toast.success('שם המשתמש כבר קיים');
         return;
       }
-      addUser(newUserName, newUserUsername, newUserPassword, newUserRole, newUserQuota);
+      addUser(newUserName, newUserUsername, newUserPassword, newUserRole, newUserQuota, newUserEmail);
       setNewUserName('');
       setNewUserUsername('');
       setNewUserPassword('');
+      setNewUserEmail('');
       setNewUserRole('employee');
       setNewUserQuota(14);
       toast.success('משתמש נוצר בהצלחה');
@@ -670,15 +672,26 @@ export function AdminDashboard() {
                     </div>
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">שם משתמש (תעודת זהות)</label>
-                    <input
-                      type="text"
-                      required
-                      value={newUserUsername}
-                      onChange={(e) => setNewUserUsername(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">שם משתמש (תעודת זהות)</label>
+                      <input
+                        type="text"
+                        required
+                        value={newUserUsername}
+                        onChange={(e) => setNewUserUsername(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">אימייל (אופציונלי)</label>
+                      <input
+                        type="email"
+                        value={newUserEmail}
+                        onChange={(e) => setNewUserEmail(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

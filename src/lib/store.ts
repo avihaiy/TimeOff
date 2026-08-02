@@ -6,6 +6,7 @@ export interface User {
   id: string;
   name: string;
   username: string;
+  email?: string;
   password?: string;
   role: Role;
   annualQuota: number;
@@ -41,7 +42,7 @@ interface AppState {
   fetchInitialData: () => Promise<void>;
   login: (username: string) => void;
   logout: () => void;
-  addUser: (name: string, username: string, password: string | undefined, role: Role, annualQuota: number) => Promise<void>;
+  addUser: (name: string, username: string, password: string | undefined, role: Role, annualQuota: number, email?: string) => Promise<void>;
   addUsersBatch: (users: {name: string, username: string, annualQuota: number}[]) => Promise<void>;
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
   updateUser: (userId: string, updates: { name: string, username: string, annualQuota: number }) => Promise<void>;
@@ -60,6 +61,7 @@ const mapUser = (dbUser: any): User => ({
   id: dbUser.id,
   name: dbUser.name,
   username: dbUser.username,
+  email: dbUser.email,
   password: dbUser.password,
   role: dbUser.role,
   annualQuota: dbUser.annual_quota,
@@ -141,12 +143,12 @@ export const useStore = create<AppState>()((set) => ({
     set({ currentUser: null });
   },
 
-  addUser: async (name, username, password, role, annualQuota) => {
+  addUser: async (name, username, password, role, annualQuota, email) => {
     try {
       const res = await fetch(`${API_URL}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, username, password, role, annualQuota })
+        body: JSON.stringify({ name, username, password, role, annualQuota, email })
       });
       const data = await res.json();
       
@@ -157,7 +159,8 @@ export const useStore = create<AppState>()((set) => ({
           username,
           password,
           role,
-          annualQuota
+          annualQuota,
+          email
         }],
       }));
     } catch (error) {
