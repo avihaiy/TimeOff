@@ -605,13 +605,15 @@ export function AdminDashboard() {
                               >
                                 <Edit className="w-4 h-4" />
                               </button>
-                              <button
-                                onClick={() => handleDeleteUser(user.id, user.name)}
-                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                title="מחק עובד"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                              {user.role !== 'admin' && (
+                                <button
+                                  onClick={() => handleDeleteUser(user.id, user.name)}
+                                  className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                  title="מחק עובד"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
