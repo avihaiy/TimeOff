@@ -78,11 +78,23 @@ const mapRequest = (dbReq: any): VacationRequest => ({
   createdAt: dbReq.created_at,
 });
 
+const getInitialUser = (): User | null => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('vacation_currentUser');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+  }
+  return null;
+};
+
 export const useStore = create<AppState>()((set) => ({
   users: [],
   requests: [],
   announcements: [],
-  currentUser: null,
+  currentUser: getInitialUser(),
   isLoading: true,
 
   fetchInitialData: async () => {
