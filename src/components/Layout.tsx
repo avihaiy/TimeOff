@@ -155,7 +155,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   to="/login"
                   className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
                 >
-                  כניסת מנהל
+                  התחברות
                 </Link>
               </div>
             )}
