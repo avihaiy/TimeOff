@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
-body {
-  background-color: #f9fafb;
-  color: #111827;
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
+  }
 }
 
 /* Make DayPicker fully responsive */
