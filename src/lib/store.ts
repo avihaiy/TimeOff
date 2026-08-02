@@ -19,6 +19,7 @@ export interface VacationRequest {
   startDate: string; 
   endDate: string; 
   signature?: string;
+  employeeEmail?: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
 }
@@ -45,7 +46,7 @@ interface AppState {
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
   updateUser: (userId: string, updates: { name: string, username: string, annualQuota: number }) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
-  addRequest: (userId: string | null, employeeName: string, employeeId: string, startDate: string, endDate: string, signature?: string) => Promise<void>;
+  addRequest: (userId: string | null, employeeName: string, employeeId: string, startDate: string, endDate: string, signature?: string, employeeEmail?: string) => Promise<void>;
   updateRequestStatus: (requestId: string, status: 'approved' | 'rejected' | 'pending') => Promise<void>;
   deleteRequest: (requestId: string) => Promise<void>;
   addAnnouncement: (title: string, content: string) => Promise<void>;
@@ -72,6 +73,7 @@ const mapRequest = (dbReq: any): VacationRequest => ({
   startDate: dbReq.start_date,
   endDate: dbReq.end_date,
   signature: dbReq.signature,
+  employeeEmail: dbReq.employee_email,
   status: dbReq.status,
   createdAt: dbReq.created_at,
 });
@@ -236,7 +238,7 @@ export const useStore = create<AppState>()((set) => ({
     }
   },
 
-  addRequest: async (userId, employeeName, employeeId, startDate, endDate, signature) => {
+  addRequest: async (userId, employeeName, employeeId, startDate, endDate, signature, employeeEmail) => {
     try {
       const res = await fetch(`${API_URL}/requests`, {
         method: 'POST',
@@ -248,6 +250,7 @@ export const useStore = create<AppState>()((set) => ({
           startDate,
           endDate,
           signature,
+          employeeEmail,
           status: 'pending'
         })
       });
@@ -262,6 +265,7 @@ export const useStore = create<AppState>()((set) => ({
           startDate,
           endDate,
           signature,
+          employeeEmail,
           status: 'pending',
           createdAt: new Date().toISOString()
         }],

@@ -18,6 +18,7 @@ export function PublicRequestForm() {
   
   const [employeeName, setEmployeeName] = useState('');
   const [employeeId, setEmployeeId] = useState('');
+  const [employeeEmail, setEmployeeEmail] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -153,10 +154,11 @@ export function PublicRequestForm() {
     }
 
     const signatureData = signatureRef.current?.toDataURL();
-    addRequest(employeeUser.id, employeeName, employeeId, startStr, endStr, signatureData);
+    addRequest(employeeUser.id, employeeName, employeeId, startStr, endStr, signatureData, employeeEmail);
     
     setEmployeeName('');
     setEmployeeId('');
+    setEmployeeEmail('');
     setDateRange(undefined);
     signatureRef.current?.clear();
     setSuccess(true);
@@ -248,7 +250,18 @@ export function PublicRequestForm() {
                   placeholder="123456789"
                   value={employeeId}
                   onChange={(e) => setEmployeeId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">אימייל (לקבלת תשובה לבקשה)</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="employee@example.com"
+                  value={employeeEmail}
+                  onChange={(e) => setEmployeeEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
                 />
               </div>
             </div>

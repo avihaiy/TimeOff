@@ -55,6 +55,22 @@ app.delete('/users/:id', async (c) => {
   return c.json({ success: true })
 })
 
+// --- EMAIL HELPER ---
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylBtZF7Vr1gyKmo_vuau8PWbgruyEwh0roIMmHzB_DEuaeiksTRHa7zXQtphMO7MPf/exec'
+const ADMIN_EMAIL = 'mdakko.vacations@gmail.com'
+
+async function sendEmail(to: string, subject: string, body: string) {
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, body })
+    })
+  } catch (e) {
+    console.error('Failed to send email:', e)
+  }
+}
+
 // --- REQUESTS ---
 app.get('/requests', async (c) => {
   const { results } = await c.env.DB.prepare('SELECT * FROM vacation_requests').all()
@@ -66,7 +82,7 @@ app.post('/requests', async (c) => {
   const id = crypto.randomUUID()
   
   await c.env.DB.prepare(
-    'INSERT INTO vacation_requests (id, user_id, employee_name, employee_id, start_date, end_date, signature, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO vacation_requests (id, user_id, employee_name, employee_id, start_date, end_date, signature, status, employee_email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
   )
     .bind(
       id,
@@ -76,9 +92,22 @@ app.post('/requests', async (c) => {
       body.startDate,
       body.endDate,
       body.signature || null,
-      body.status || 'pending'
+      body.status || 'pending',
+      body.employeeEmail || null
     )
     .run()
+    
+  // Send email to admin
+  const htmlBody = `
+    <div dir="rtl" style="font-family: Arial, sans-serif;">
+      <h2>בקשת חופשה חדשה ממתינה לאישור 🏖️</h2>
+      <p><strong>שם העובד:</strong> ${body.employeeName}</p>
+      <p><strong>תאריך התחלה:</strong> ${body.startDate}</p>
+      <p><strong>תאריך סיום:</strong> ${body.endDate}</p>
+      <p>היכנס למערכת כדי לאשר או לדחות את הבקשה.</p>
+    </div>
+  `
+  await sendEmail(ADMIN_EMAIL, 'בקשת חופשה חדשה - מועצה דתית', htmlBody)
     
   return c.json({ success: true, id })
 })
@@ -90,6 +119,22 @@ app.put('/requests/:id/status', async (c) => {
   await c.env.DB.prepare('UPDATE vacation_requests SET status = ? WHERE id = ?')
     .bind(body.status, id)
     .run()
+    
+  // Send email to employee if email exists
+  const reqInfo = await c.env.DB.prepare('SELECT * FROM vacation_requests WHERE id = ?').bind(id).first()
+  if (reqInfo && reqInfo.employee_email) {
+    const statusHebrew = body.status === 'approved' ? 'אושרה' : 'נדחתה';
+    const emailBody = `
+      <div dir="rtl" style="font-family: Arial, sans-serif;">
+        <h2>עדכון סטטוס בקשת חופשה 📅</h2>
+        <p>שלום ${reqInfo.employee_name},</p>
+        <p>בקשת החופשה שלך לתאריכים ${reqInfo.start_date} עד ${reqInfo.end_date} <strong>${statusHebrew}</strong>.</p>
+        <p>בברכה,</p>
+        <p>המועצה הדתית</p>
+      </div>
+    `
+    await sendEmail(reqInfo.employee_email as string, `עדכון בקשת חופשה - ${statusHebrew}`, emailBody)
+  }
     
   return c.json({ success: true })
 })
