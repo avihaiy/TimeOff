@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { supabase } from './supabase';
 
 export type Role = 'admin' | 'employee';
 
@@ -53,6 +52,8 @@ interface AppState {
   deleteAnnouncement: (id: string) => Promise<void>;
 }
 
+const API_URL = 'https://vacation-manager-backend.avihaidj0.workers.dev';
+
 // Convert DB snake_case to camelCase
 const mapUser = (dbUser: any): User => ({
   id: dbUser.id,
@@ -86,19 +87,19 @@ export const useStore = create<AppState>()((set) => ({
     set({ isLoading: true });
     try {
       const [usersRes, requestsRes, annRes] = await Promise.all([
-        supabase.from('vacation_users').select('*'),
-        supabase.from('vacation_requests').select('*'),
-        supabase.from('vacation_announcements').select('*').order('created_at', { ascending: false })
+        fetch(`${API_URL}/users`),
+        fetch(`${API_URL}/requests`),
+        fetch(`${API_URL}/announcements`)
       ]);
 
-      if (usersRes.error) throw usersRes.error;
-      if (requestsRes.error) throw requestsRes.error;
-      if (annRes.error) throw annRes.error;
+      const users = await usersRes.json();
+      const requests = await requestsRes.json();
+      const announcements = await annRes.json();
 
       set({
-        users: (usersRes.data || []).map(mapUser),
-        requests: (requestsRes.data || []).map(mapRequest),
-        announcements: (annRes.data || []).map(a => ({
+        users: (users || []).map(mapUser),
+        requests: (requests || []).map(mapRequest),
+        announcements: (announcements || []).map((a: any) => ({
           id: a.id,
           title: a.title,
           content: a.content,
@@ -107,7 +108,7 @@ export const useStore = create<AppState>()((set) => ({
         isLoading: false
       });
     } catch (error) {
-      console.error('Error fetching data from Supabase:', error);
+      console.error('Error fetching data from API:', error);
       set({ isLoading: false });
     }
   },
@@ -116,7 +117,6 @@ export const useStore = create<AppState>()((set) => ({
     set((state) => {
       const user = state.users.find((u) => u.username === username);
       if (user) {
-        // Simple persist to localStorage just for keeping session across reloads
         localStorage.setItem('vacation_currentUser', JSON.stringify(user));
       }
       return { currentUser: user || null };
@@ -129,22 +129,22 @@ export const useStore = create<AppState>()((set) => ({
 
   addUser: async (name, username, password, role, annualQuota) => {
     try {
-      const { data, error } = await supabase
-        .from('vacation_users')
-        .insert([{
+      const res = await fetch(`${API_URL}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, username, password, role, annualQuota })
+      });
+      const data = await res.json();
+      
+      set((state) => ({
+        users: [...state.users, {
+          id: data.id,
           name,
           username,
           password,
           role,
-          annual_quota: annualQuota
-        }])
-        .select()
-        .single();
-        
-      if (error) throw error;
-      
-      set((state) => ({
-        users: [...state.users, mapUser(data)],
+          annualQuota
+        }],
       }));
     } catch (error) {
       console.error('Error adding user:', error);
@@ -154,24 +154,29 @@ export const useStore = create<AppState>()((set) => ({
 
   addUsersBatch: async (newUsers) => {
     try {
-      const usersToInsert = newUsers.map(u => ({
-        name: u.name,
-        username: u.username,
-        password: '123', // Default password for imported users
-        role: 'employee',
-        annual_quota: u.annualQuota
-      }));
-
-      const { data, error } = await supabase
-        .from('vacation_users')
-        .insert(usersToInsert)
-        .select();
-        
-      if (error) throw error;
+      // API currently handles one by one, we can just map POST requests for now
+      // Or we can add a batch endpoint later
+      const promises = newUsers.map(u => 
+        fetch(`${API_URL}/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            name: u.name, 
+            username: u.username, 
+            password: '123', 
+            role: 'employee', 
+            annualQuota: u.annualQuota 
+          })
+        })
+      );
       
-      set((state) => ({
-        users: [...state.users, ...data.map(mapUser)],
-      }));
+      await Promise.all(promises);
+      
+      // Re-fetch all data to be safe
+      const res = await fetch(`${API_URL}/users`);
+      const usersData = await res.json();
+      
+      set({ users: usersData.map(mapUser) });
     } catch (error) {
       console.error('Error adding users batch:', error);
       alert('שגיאה בייבוא משתמשים');
@@ -180,12 +185,11 @@ export const useStore = create<AppState>()((set) => ({
 
   updateUserPassword: async (userId, newPassword) => {
     try {
-      const { error } = await supabase
-        .from('vacation_users')
-        .update({ password: newPassword })
-        .eq('id', userId);
-        
-      if (error) throw error;
+      await fetch(`${API_URL}/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: newPassword })
+      });
       
       set((state) => ({
         users: state.users.map((user) => 
@@ -200,41 +204,28 @@ export const useStore = create<AppState>()((set) => ({
 
   updateUser: async (userId, updates) => {
     try {
-      const { error } = await supabase
-        .from('vacation_users')
-        .update({
-          name: updates.name,
-          username: updates.username,
-          annual_quota: updates.annualQuota
-        })
-        .eq('id', userId);
-        
-      if (error) throw error;
+      await fetch(`${API_URL}/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
       
       set((state) => ({
         users: state.users.map((user) => 
-          user.id === userId ? { 
-            ...user, 
-            name: updates.name, 
-            username: updates.username, 
-            annualQuota: updates.annualQuota 
-          } : user
+          user.id === userId ? { ...user, ...updates } : user
         ),
       }));
     } catch (error) {
       console.error('Error updating user:', error);
-      alert('שגיאה בעדכון פרטי משתמש');
+      alert('שגיאה בעדכון משתמש');
     }
   },
 
   deleteUser: async (userId) => {
     try {
-      const { error } = await supabase
-        .from('vacation_users')
-        .delete()
-        .eq('id', userId);
-        
-      if (error) throw error;
+      await fetch(`${API_URL}/users/${userId}`, {
+        method: 'DELETE'
+      });
       
       set((state) => ({
         users: state.users.filter((user) => user.id !== userId),
@@ -247,89 +238,93 @@ export const useStore = create<AppState>()((set) => ({
 
   addRequest: async (userId, employeeName, employeeId, startDate, endDate, signature) => {
     try {
-      const { data, error } = await supabase
-        .from('vacation_requests')
-        .insert([{
-          user_id: userId,
-          employee_name: employeeName,
-          employee_id: employeeId,
-          start_date: startDate,
-          end_date: endDate,
-          signature: signature,
+      const res = await fetch(`${API_URL}/requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          employeeName,
+          employeeId,
+          startDate,
+          endDate,
+          signature,
           status: 'pending'
-        }])
-        .select()
-        .single();
-        
-      if (error) throw error;
-
+        })
+      });
+      const data = await res.json();
+      
       set((state) => ({
-        requests: [...state.requests, mapRequest(data)],
+        requests: [...state.requests, {
+          id: data.id,
+          userId,
+          employeeName,
+          employeeId,
+          startDate,
+          endDate,
+          signature,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        }],
       }));
     } catch (error) {
       console.error('Error adding request:', error);
-      alert('שגיאה בהגשת בקשה');
+      alert('שגיאה ביצירת בקשה');
     }
   },
 
   updateRequestStatus: async (requestId, status) => {
     try {
-      const { error } = await supabase
-        .from('vacation_requests')
-        .update({ status })
-        .eq('id', requestId);
-        
-      if (error) throw error;
-
+      await fetch(`${API_URL}/requests/${requestId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      
       set((state) => ({
-        requests: state.requests.map((req) =>
+        requests: state.requests.map((req) => 
           req.id === requestId ? { ...req, status } : req
         ),
       }));
     } catch (error) {
       console.error('Error updating request status:', error);
-      alert('שגיאה בעדכון סטטוס');
+      alert('שגיאה בעדכון סטטוס בקשה');
     }
   },
 
-  deleteRequest: async (requestId: string) => {
-    if (window.confirm('האם אתה בטוח שברצונך למחוק בקשה זו?')) {
-      try {
-        const { error } = await supabase
-          .from('vacation_requests')
-          .delete()
-          .eq('id', requestId);
-          
-        if (error) throw error;
-        
-        set((state) => ({
-          requests: state.requests.filter((r) => r.id !== requestId)
-        }));
-      } catch (error) {
-        console.error('Error deleting request:', error);
-      }
-    }
-  },
-  
-  addAnnouncement: async (title: string, content: string) => {
+  deleteRequest: async (requestId) => {
     try {
-      const { data, error } = await supabase
-        .from('vacation_announcements')
-        .insert([{ title, content }])
-        .select()
-        .single();
-        
-      if (error) throw error;
-      
-      const newAnn: Announcement = {
-        id: data.id,
-        title: data.title,
-        content: data.content,
-        createdAt: data.created_at
-      };
+      await fetch(`${API_URL}/requests/${requestId}`, {
+        method: 'DELETE'
+      });
       
       set((state) => ({
-        announcements: [newAnn, ...state.announcements]
+        requests: state.requests.filter((req) => req.id !== requestId),
+      }));
+    } catch (error) {
+      console.error('Error deleting request:', error);
+      alert('שגיאה במחיקת בקשה');
+    }
+  },
+
+  addAnnouncement: async (title, content) => {
+    try {
+      const res = await fetch(`${API_URL}/announcements`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content })
+      });
+      const data = await res.json();
+      
+      set((state) => ({
+        announcements: [
+          {
+            id: data.id,
+            title,
+            content,
+            createdAt: new Date().toISOString()
+          },
+          ...state.announcements,
+        ],
       }));
     } catch (error) {
       console.error('Error adding announcement:', error);
@@ -337,33 +332,18 @@ export const useStore = create<AppState>()((set) => ({
     }
   },
 
-  deleteAnnouncement: async (id: string) => {
-    if (window.confirm('האם אתה בטוח שברצונך למחוק הודעה זו?')) {
-      try {
-        const { error } = await supabase
-          .from('vacation_announcements')
-          .delete()
-          .eq('id', id);
-          
-        if (error) throw error;
-        
-        set((state) => ({
-          announcements: state.announcements.filter((a) => a.id !== id)
-        }));
-      } catch (error) {
-        console.error('Error deleting announcement:', error);
-        alert('שגיאה במחיקת הודעה');
-      }
+  deleteAnnouncement: async (id) => {
+    try {
+      await fetch(`${API_URL}/announcements/${id}`, {
+        method: 'DELETE'
+      });
+      
+      set((state) => ({
+        announcements: state.announcements.filter((a) => a.id !== id),
+      }));
+    } catch (error) {
+      console.error('Error deleting announcement:', error);
+      alert('שגיאה במחיקת הודעה');
     }
-  }
+  },
 }));
-
-// Auto-restore session on load
-const savedUser = localStorage.getItem('vacation_currentUser');
-if (savedUser) {
-  try {
-    useStore.setState({ currentUser: JSON.parse(savedUser) });
-  } catch (e) {
-    console.error('Failed to parse saved user');
-  }
-}

@@ -1,0 +1,8 @@
+name = "vacation-manager-backend"
+main = "src/index.ts"
+compatibility_date = "2024-03-20"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "vacation-db"
+database_id = "d1b7f025-e388-4a56-8130-2e033ba7b6c1"
