@@ -117,6 +117,20 @@ app.post('/requests', async (c) => {
       await sendEmail(admin.email as string, 'בקשת חופשה חדשה - מועצה דתית', htmlBody)
     }
   }
+  
+  // Send confirmation email to the employee if they provided an email
+  if (body.employeeEmail) {
+    const employeeHtmlBody = `
+      <div dir="rtl" style="font-family: Arial, sans-serif;">
+        <h2>בקשת החופשה שלך התקבלה בהצלחה! 🏖️</h2>
+        <p>שלום ${body.employeeName},</p>
+        <p>קיבלנו את בקשת החופשה שלך לתאריכים: <strong>${body.startDate}</strong> עד <strong>${body.endDate}</strong>.</p>
+        <p>הבקשה כעת ממתינה לאישור מנהל. אנו נעדכן אותך במייל ברגע שהיא תאושר או תדחה.</p>
+        <p>בברכה,<br/>מערכת ניהול חופשות - מועצה דתית עכו</p>
+      </div>
+    `
+    await sendEmail(body.employeeEmail, 'בקשת החופשה שלך התקבלה וממתינה לאישור', employeeHtmlBody)
+  }
     
   return c.json({ success: true, id })
 })
