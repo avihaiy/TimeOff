@@ -107,7 +107,16 @@ app.post('/requests', async (c) => {
       <p>היכנס למערכת כדי לאשר או לדחות את הבקשה.</p>
     </div>
   `
+  // Send email to default admin
   await sendEmail(ADMIN_EMAIL, 'בקשת חופשה חדשה - מועצה דתית', htmlBody)
+  
+  // Send email to any other admins that have an email configured
+  const { results: admins } = await c.env.DB.prepare('SELECT email FROM vacation_users WHERE role = "admin" AND email IS NOT NULL').all()
+  for (const admin of admins) {
+    if (admin.email && admin.email !== ADMIN_EMAIL) {
+      await sendEmail(admin.email as string, 'בקשת חופשה חדשה - מועצה דתית', htmlBody)
+    }
+  }
     
   return c.json({ success: true, id })
 })
