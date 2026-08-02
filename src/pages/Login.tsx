@@ -61,7 +61,7 @@ export function Login() {
                 type="text"
                 required
                 className="appearance-none rounded-lg relative block w-full px-3 py-3 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="שם משתמש (נסה: admin)"
+                placeholder="שם משתמש"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
@@ -77,7 +77,7 @@ export function Login() {
                 type="password"
                 required
                 className="appearance-none rounded-lg relative block w-full px-3 py-3 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="סיסמה (נסה: 123)"
+                placeholder="סיסמה"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
