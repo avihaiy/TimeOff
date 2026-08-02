@@ -52,7 +52,7 @@ export function AdminDashboard() {
 
   // Edit user state
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [editUserForm, setEditUserForm] = useState({ name: '', username: '', annualQuota: 14 });
+  const [editUserForm, setEditUserForm] = useState<{ name: string, username: string, annualQuota: number, role: Role, email?: string }>({ name: '', username: '', annualQuota: 14, role: 'employee', email: '' });
 
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [newPasswordForUser, setNewPasswordForUser] = useState('');
@@ -105,7 +105,9 @@ export function AdminDashboard() {
     setEditUserForm({
       name: user.name,
       username: user.username,
-      annualQuota: user.annualQuota
+      annualQuota: user.annualQuota,
+      role: user.role || 'employee',
+      email: user.email || ''
     });
   };
 
@@ -487,22 +489,24 @@ export function AdminDashboard() {
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="px-3 py-3 text-sm font-semibold text-gray-600">שם עובד</th>
-                    <th className="px-3 py-3 text-sm font-semibold text-gray-600">תעודת זהות</th>
-                    <th className="px-3 py-3 text-sm font-semibold text-gray-600 text-center">מכסה שנתית</th>
-                    <th className="px-3 py-3 text-sm font-semibold text-gray-600 text-center">נוצלו השנה</th>
+                    <th className="px-3 py-3 text-sm font-semibold text-gray-600">ת.ז.</th>
+                    <th className="px-3 py-3 text-sm font-semibold text-gray-600 text-center">מכסה</th>
+                    <th className="px-3 py-3 text-sm font-semibold text-gray-600 text-center">נוצלו</th>
                     <th className="px-3 py-3 text-sm font-semibold text-gray-600 text-center">יתרה</th>
+                    <th className="px-3 py-3 text-sm font-semibold text-gray-600 text-center">תפקיד</th>
+                    <th className="px-3 py-3 text-sm font-semibold text-gray-600 text-center">אימייל</th>
                     <th className="px-3 py-3 text-sm font-semibold text-gray-600 text-center">פעולות</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {users.filter(u => u.role !== 'admin').length === 0 ? (
+                  {users.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                         לא נמצאו עובדים במערכת. לחץ על כפתור הייבוא כדי להוסיף.
                       </td>
                     </tr>
                   ) : (
-                    users.filter(u => u.role !== 'admin').map((user) => {
+                    users.map((user) => {
                       const currentYear = new Date().getFullYear();
                       const myApprovedRequests = requests.filter(r => 
                         r.status === 'approved' && 
@@ -541,6 +545,25 @@ export function AdminDashboard() {
                           </td>
                           <td className="px-3 py-3 text-sm text-gray-500 text-center">{usedDays}</td>
                           <td className="px-3 py-3 text-sm font-semibold text-emerald-600 text-center">{remainingDays}</td>
+                          <td className="px-4 py-3">
+                            <select
+                              value={editUserForm.role}
+                              onChange={(e) => setEditUserForm({ ...editUserForm, role: e.target.value as Role })}
+                              className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                            >
+                              <option value="employee">עובד</option>
+                              <option value="admin">מנהל</option>
+                            </select>
+                          </td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="email"
+                              value={editUserForm.email || ''}
+                              onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
+                              className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                              placeholder="אימייל"
+                            />
+                          </td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <button
@@ -567,6 +590,12 @@ export function AdminDashboard() {
                           <td className="px-3 py-3 text-sm text-gray-900 text-center">{user.annualQuota}</td>
                           <td className="px-3 py-3 text-sm text-gray-500 text-center">{usedDays}</td>
                           <td className="px-3 py-3 text-sm font-semibold text-emerald-600 text-center">{remainingDays}</td>
+                          <td className="px-3 py-3 text-sm text-gray-500 text-center">
+                            <span className={`px-2 py-1 rounded text-xs ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>
+                              {user.role === 'admin' ? 'מנהל' : 'עובד'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3 text-sm text-gray-500">{user.email || '-'}</td>
                           <td className="px-4 py-4 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <button

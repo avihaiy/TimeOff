@@ -40,9 +40,9 @@ app.put('/users/:id', async (c) => {
       .run()
   } else {
     await c.env.DB.prepare(
-      'UPDATE vacation_users SET name = ?, username = ?, annual_quota = ? WHERE id = ?'
+      'UPDATE vacation_users SET name = ?, username = ?, annual_quota = ?, role = ?, email = ? WHERE id = ?'
     )
-      .bind(body.name, body.username, body.annualQuota, id)
+      .bind(body.name, body.username, body.annualQuota, body.role, body.email || null, id)
       .run()
   }
   

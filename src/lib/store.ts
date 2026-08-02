@@ -45,7 +45,7 @@ interface AppState {
   addUser: (name: string, username: string, password: string | undefined, role: Role, annualQuota: number, email?: string) => Promise<void>;
   addUsersBatch: (users: {name: string, username: string, annualQuota: number}[]) => Promise<void>;
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
-  updateUser: (userId: string, updates: { name: string, username: string, annualQuota: number }) => Promise<void>;
+  updateUser: (userId: string, updates: { name: string, username: string, annualQuota: number, role: Role, email?: string }) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
   addRequest: (userId: string | null, employeeName: string, employeeId: string, startDate: string, endDate: string, signature?: string, employeeEmail?: string) => Promise<void>;
   updateRequestStatus: (requestId: string, status: 'approved' | 'rejected' | 'pending') => Promise<void>;
