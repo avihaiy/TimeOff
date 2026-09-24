@@ -101,6 +101,12 @@ export const useStore = create<AppState>()((set) => ({
 
   fetchInitialData: async () => {
     set({ isLoading: true });
+
+    // Safety fallback: if fetch takes more than 15 seconds, stop loading
+    const fallbackTimer = setTimeout(() => {
+      set((state) => state.isLoading ? { isLoading: false } : state);
+    }, 15000);
+
     try {
       const [usersRes, requestsRes, annRes] = await Promise.all([
         fetch(`${API_URL}/users`),
@@ -108,6 +114,8 @@ export const useStore = create<AppState>()((set) => ({
         fetch(`${API_URL}/announcements`)
       ]);
 
+      clearTimeout(fallbackTimer);
+      
       const users = await usersRes.json();
       const requests = await requestsRes.json();
       const announcements = await annRes.json();
