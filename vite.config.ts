@@ -36,10 +36,12 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom', 'zustand'],
-          calendar: ['react-day-picker', 'date-fns', '@hebcal/core'],
-          utils: ['framer-motion', 'lucide-react', 'react-hot-toast']
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('zustand') || id.includes('router')) return 'vendor';
+            if (id.includes('@hebcal') || id.includes('date-fns') || id.includes('day-picker')) return 'calendar';
+            return 'utils';
+          }
         }
       }
     }
