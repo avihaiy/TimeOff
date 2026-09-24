@@ -4,6 +4,7 @@ import { LogOut, Download, Clock, Sun, Moon } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { HDate } from '@hebcal/core';
 import { motion } from 'framer-motion';
+import { FloatingActionButton } from './FloatingActionButton';
 
 function HebrewDateTime() {
   const [time, setTime] = useState(new Date());
@@ -171,6 +172,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </motion.div>
       </main>
+      <FloatingActionButton />
       <footer className="w-full text-center py-4 text-sm text-gray-500 dark:text-gray-400 mt-auto border-t border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm fixed bottom-0">
         המערכת נבנתה ע"י Avihai yosipovich © {new Date().getFullYear()}
       </footer>
