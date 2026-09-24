@@ -55,7 +55,7 @@ interface AppState {
   deleteAnnouncement: (id: string) => Promise<void>;
 }
 
-const API_URL = 'https://vacation-manager-backend.avihaidj0.workers.dev';
+const API_URL = '/api';
 
 // Convert DB snake_case to camelCase
 const mapUser = (dbUser: any): User => ({

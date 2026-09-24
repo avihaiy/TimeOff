@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/:match*",
+      "destination": "https://vacation-manager-backend.avihaidj0.workers.dev/:match*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

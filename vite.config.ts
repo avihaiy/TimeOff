@@ -33,6 +33,15 @@ export default defineConfig({
       }
     })
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://vacation-manager-backend.avihaidj0.workers.dev',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
+  },
   build: {
     rollupOptions: {
       output: {
