@@ -74,22 +74,10 @@ app.get('/users', async (c) => {
   return c.json(results)
 })
 
-// Protected Routes (Require Token)
-app.use('/users', (c, next) => {
-  if (c.req.method === 'GET') return next(); // allow public read for quota
-  return authMiddleware(c, next);
-})
-app.use('/users/*', authMiddleware)
-app.use('/announcements', (c, next) => {
-  if (c.req.method === 'GET') return next();
-  return authMiddleware(c, next);
-})
-app.use('/announcements/*', authMiddleware)
-// Note: POST /requests is public so employees can submit without logging in
-app.use('/requests/:id/*', authMiddleware)
+// Protected Routes (Require Token) - Applied explicitly to mutating endpoints
 
 
-app.post('/users', async (c) => {
+app.post('/users', authMiddleware, async (c) => {
   const body = await c.req.json()
   const id = crypto.randomUUID()
   const hashed = await bcrypt.hash(body.password, 10);
@@ -103,7 +91,7 @@ app.post('/users', async (c) => {
   return c.json({ success: true, id })
 })
 
-app.put('/users/:id', async (c) => {
+app.put('/users/:id', authMiddleware, async (c) => {
   const id = c.req.param('id')
   const body = await c.req.json()
   
@@ -123,7 +111,7 @@ app.put('/users/:id', async (c) => {
   return c.json({ success: true })
 })
 
-app.delete('/users/:id', async (c) => {
+app.delete('/users/:id', authMiddleware, async (c) => {
   const id = c.req.param('id')
   await c.env.DB.prepare('DELETE FROM vacation_users WHERE id = ?').bind(id).run()
   return c.json({ success: true })
@@ -203,7 +191,7 @@ https://time-off-git-main-avihaidj0-2837s-projects.vercel.app/login
   return c.json({ success: true, id })
 })
 
-app.put('/requests/:id/status', async (c) => {
+app.put('/requests/:id/status', authMiddleware, async (c) => {
   const id = c.req.param('id')
   const { status } = await c.req.json()
   
@@ -229,7 +217,7 @@ app.put('/requests/:id/status', async (c) => {
   return c.json({ success: true })
 })
 
-app.delete('/requests/:id', async (c) => {
+app.delete('/requests/:id', authMiddleware, async (c) => {
   const id = c.req.param('id')
   await c.env.DB.prepare('DELETE FROM vacation_requests WHERE id = ?').bind(id).run()
   return c.json({ success: true })
@@ -237,17 +225,24 @@ app.delete('/requests/:id', async (c) => {
 
 // --- ANNOUNCEMENTS ---
 app.get('/announcements', async (c) => {
-  const { results } = await c.env.DB.prepare('SELECT * FROM announcements ORDER BY created_at DESC').all()
-  return c.json(results)
+  try {
+    const { results } = await c.env.DB.prepare('SELECT * FROM vacation_announcements ORDER BY created_at DESC').all()
+    return c.json(results)
+  } catch (e) {
+    try {
+      await c.env.DB.prepare('CREATE TABLE vacation_announcements (id TEXT PRIMARY KEY, title TEXT NOT NULL, content TEXT NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL)').run();
+    } catch(e2) {}
+    return c.json([])
+  }
 })
 
-app.post('/announcements', async (c) => {
+app.post('/announcements', authMiddleware, async (c) => {
   const body = await c.req.json()
   const id = crypto.randomUUID()
   const now = new Date().toISOString()
   
   await c.env.DB.prepare(
-    'INSERT INTO announcements (id, title, content, created_at) VALUES (?, ?, ?, ?)'
+    'INSERT INTO vacation_announcements (id, title, content, created_at) VALUES (?, ?, ?, ?)'
   )
     .bind(id, body.title, body.content, now)
     .run()
@@ -255,9 +250,9 @@ app.post('/announcements', async (c) => {
   return c.json({ success: true, id })
 })
 
-app.delete('/announcements/:id', async (c) => {
+app.delete('/announcements/:id', authMiddleware, async (c) => {
   const id = c.req.param('id')
-  await c.env.DB.prepare('DELETE FROM announcements WHERE id = ?').bind(id).run()
+  await c.env.DB.prepare('DELETE FROM vacation_announcements WHERE id = ?').bind(id).run()
   return c.json({ success: true })
 })
 
