@@ -2,11 +2,12 @@ import { Toaster } from 'react-hot-toast';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useStore } from './lib/store';
 import { Layout } from './components/Layout';
-import { Login } from './pages/Login';
-import { PublicRequestForm } from './pages/PublicRequestForm';
-import { EmployeeDashboard } from './pages/EmployeeDashboard';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
+
+const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
+const PublicRequestForm = lazy(() => import('./pages/PublicRequestForm').then(m => ({ default: m.PublicRequestForm })));
+const EmployeeDashboard = lazy(() => import('./pages/EmployeeDashboard').then(m => ({ default: m.EmployeeDashboard })));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 
 function FullPageSkeleton() {
   return (
@@ -43,7 +44,6 @@ function ProtectedRoute({ children, role }: { children: React.ReactNode, role?: 
   }
 
   if (role && currentUser.role !== role && currentUser.role !== 'admin') {
-    // Admin can access everything, employee can only access employee routes
     return <Navigate to="/" replace />;
   }
 
@@ -65,40 +65,42 @@ function App() {
 
   return (
     <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        
-        <Route 
-          path="/admin" 
-          element={
-            <ProtectedRoute role="admin">
-              <AdminDashboard />
-            </ProtectedRoute>
-          } 
-        />
+      <Suspense fallback={<FullPageSkeleton />}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute role="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            } 
+          />
 
-        <Route 
-          path="/employee" 
-          element={
-            <ProtectedRoute role="employee">
-              <EmployeeDashboard />
-            </ProtectedRoute>
-          } 
-        />
+          <Route 
+            path="/employee" 
+            element={
+              <ProtectedRoute role="employee">
+                <EmployeeDashboard />
+              </ProtectedRoute>
+            } 
+          />
 
-        <Route 
-          path="/" 
-          element={
-            currentUser?.role === 'admin' ? (
-              <Navigate to="/admin" replace />
-            ) : (
-              <Layout>
-                <PublicRequestForm />
-              </Layout>
-            )
-          } 
-        />
-      </Routes>
+          <Route 
+            path="/" 
+            element={
+              currentUser?.role === 'admin' ? (
+                <Navigate to="/admin" replace />
+              ) : (
+                <Layout>
+                  <PublicRequestForm />
+                </Layout>
+              )
+            } 
+          />
+        </Routes>
+      </Suspense>
       <Toaster position="bottom-center" toastOptions={{ className: 'font-medium text-sm' }} />
     </Router>
   );
