@@ -1,30 +1,103 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { jwt, sign } from 'hono/jwt'
+import bcrypt from 'bcryptjs'
 
 type Bindings = {
   DB: D1Database
+  JWT_SECRET?: string
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
 
-// Allow CORS from any origin for simplicity
 app.use('/*', cors())
 
-app.get('/', (c) => c.text('Vacation Manager API is running!'))
+app.get('/', (c) => c.text('Vacation Manager API is running securely!'))
+
+// --- AUTHENTICATION ---
+app.post('/login', async (c) => {
+  const { username, password } = await c.req.json()
+  const dbUser = await c.env.DB.prepare('SELECT * FROM vacation_users WHERE username = ?').bind(username).first()
+  
+  if (!dbUser) {
+    return c.json({ error: 'User not found' }, 401)
+  }
+
+  let valid = false;
+  
+  // Check if password is a bcrypt hash
+  if (typeof dbUser.password === 'string' && dbUser.password.startsWith('$2')) {
+    valid = await bcrypt.compare(password, dbUser.password);
+  } else {
+    // Plain text migration path
+    valid = dbUser.password === password;
+    if (valid) {
+      // Automatically upgrade password to hash
+      const hashed = await bcrypt.hash(password, 10);
+      await c.env.DB.prepare('UPDATE vacation_users SET password = ? WHERE id = ?')
+        .bind(hashed, dbUser.id)
+        .run();
+    }
+  }
+
+  if (!valid) {
+    return c.json({ error: 'Invalid password' }, 401)
+  }
+
+  const payload = {
+    id: dbUser.id,
+    username: dbUser.username,
+    role: dbUser.role,
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 // 30 days expiration
+  }
+  
+  const secret = c.env.JWT_SECRET || 'fallback-secret-key-do-not-use-in-prod'
+  const token = await sign(payload, secret)
+  
+  // Remove password before sending to frontend
+  const { password: _, ...userWithoutPassword } = dbUser as any;
+  
+  return c.json({ token, user: userWithoutPassword })
+})
+
+// Custom middleware to optionally check auth, but we will protect all mutating routes
+const authMiddleware = (c: any, next: any) => {
+  const jwtMiddleware = jwt({
+    secret: c.env.JWT_SECRET || 'fallback-secret-key-do-not-use-in-prod',
+  });
+  return jwtMiddleware(c, next);
+}
 
 // --- USERS ---
 app.get('/users', async (c) => {
-  const { results } = await c.env.DB.prepare('SELECT * FROM vacation_users').all()
+  const { results } = await c.env.DB.prepare('SELECT id, name, username, role, annual_quota, email FROM vacation_users').all()
   return c.json(results)
 })
+
+// Protected Routes (Require Token)
+app.use('/users', (c, next) => {
+  if (c.req.method === 'GET') return next(); // allow public read for quota
+  return authMiddleware(c, next);
+})
+app.use('/users/*', authMiddleware)
+app.use('/announcements', (c, next) => {
+  if (c.req.method === 'GET') return next();
+  return authMiddleware(c, next);
+})
+app.use('/announcements/*', authMiddleware)
+// Note: POST /requests is public so employees can submit without logging in
+app.use('/requests/:id/*', authMiddleware)
+
 
 app.post('/users', async (c) => {
   const body = await c.req.json()
   const id = crypto.randomUUID()
+  const hashed = await bcrypt.hash(body.password, 10);
+  
   await c.env.DB.prepare(
     'INSERT INTO vacation_users (id, name, username, password, role, annual_quota, email) VALUES (?, ?, ?, ?, ?, ?, ?)'
   )
-    .bind(id, body.name, body.username, body.password, body.role, body.annualQuota || 14, body.email || null)
+    .bind(id, body.name, body.username, hashed, body.role, body.annualQuota || 14, body.email || null)
     .run()
     
   return c.json({ success: true, id })
@@ -35,8 +108,9 @@ app.put('/users/:id', async (c) => {
   const body = await c.req.json()
   
   if (body.password) {
+    const hashed = await bcrypt.hash(body.password, 10);
     await c.env.DB.prepare('UPDATE vacation_users SET password = ? WHERE id = ?')
-      .bind(body.password, id)
+      .bind(hashed, id)
       .run()
   } else {
     await c.env.DB.prepare(
@@ -98,65 +172,58 @@ app.post('/requests', async (c) => {
     .run()
     
   // Send email to admin
-  const htmlBody = `
-    <div dir="rtl" style="font-family: Arial, sans-serif;">
-      <h2>בקשת חופשה חדשה ממתינה לאישור 🏖️</h2>
-      <p><strong>שם העובד:</strong> ${body.employeeName}</p>
-      <p><strong>תאריך התחלה:</strong> ${body.startDate}</p>
-      <p><strong>תאריך סיום:</strong> ${body.endDate}</p>
-      <p>היכנס למערכת כדי לאשר או לדחות את הבקשה.</p>
-    </div>
-  `
-  // Send email to default admin
-  await sendEmail(ADMIN_EMAIL, 'בקשת חופשה חדשה - מועצה דתית', htmlBody)
+  const emailBody = `
+התקבלה בקשת חופשה חדשה במערכת!
+
+שם העובד: ${body.employeeName}
+תעודת זהות: ${body.employeeId}
+מתאריך: ${body.startDate}
+עד תאריך: ${body.endDate}
+
+לצפייה בבקשה ואישורה, יש להיכנס למערכת:
+https://time-off-git-main-avihaidj0-2837s-projects.vercel.app/login
+  `.trim()
   
-  // Send email to any other admins that have an email configured
-  const { results: admins } = await c.env.DB.prepare('SELECT email FROM vacation_users WHERE role = "admin" AND email IS NOT NULL').all()
-  for (const admin of admins) {
-    if (admin.email && admin.email !== ADMIN_EMAIL) {
-      await sendEmail(admin.email as string, 'בקשת חופשה חדשה - מועצה דתית', htmlBody)
-    }
-  }
-  
-  // Send confirmation email to the employee if they provided an email
+  await sendEmail(ADMIN_EMAIL, `בקשת חופשה חדשה: ${body.employeeName}`, emailBody)
+
+  // Send confirmation to employee
   if (body.employeeEmail) {
-    const employeeHtmlBody = `
-      <div dir="rtl" style="font-family: Arial, sans-serif;">
-        <h2>בקשת החופשה שלך התקבלה בהצלחה! 🏖️</h2>
-        <p>שלום ${body.employeeName},</p>
-        <p>קיבלנו את בקשת החופשה שלך לתאריכים: <strong>${body.startDate}</strong> עד <strong>${body.endDate}</strong>.</p>
-        <p>הבקשה כעת ממתינה לאישור מנהל. אנו נעדכן אותך במייל ברגע שהיא תאושר או תדחה.</p>
-        <p>בברכה,<br/>מערכת ניהול חופשות - מועצה דתית עכו</p>
-      </div>
-    `
-    await sendEmail(body.employeeEmail, 'בקשת החופשה שלך התקבלה וממתינה לאישור', employeeHtmlBody)
+    const employeeBody = `
+שלום ${body.employeeName},
+
+בקשת החופשה שלך לתאריכים ${body.startDate} - ${body.endDate} הוגשה בהצלחה.
+אנו נעדכן אותך במייל ברגע שהמנהל יאשר או ידחה את הבקשה.
+
+בברכה,
+מערכת ניהול חופשות - המועצה הדתית עכו
+    `.trim()
+    await sendEmail(body.employeeEmail, `הגשת בקשת חופשה - ממתין לאישור מנהל`, employeeBody)
   }
-    
+  
   return c.json({ success: true, id })
 })
 
 app.put('/requests/:id/status', async (c) => {
   const id = c.req.param('id')
-  const body = await c.req.json()
+  const { status } = await c.req.json()
   
   await c.env.DB.prepare('UPDATE vacation_requests SET status = ? WHERE id = ?')
-    .bind(body.status, id)
+    .bind(status, id)
     .run()
-    
-  // Send email to employee if email exists
-  const reqInfo = await c.env.DB.prepare('SELECT * FROM vacation_requests WHERE id = ?').bind(id).first()
-  if (reqInfo && reqInfo.employee_email) {
-    const statusHebrew = body.status === 'approved' ? 'אושרה' : 'נדחתה';
+
+  // Fetch request info for email
+  const req = await c.env.DB.prepare('SELECT * FROM vacation_requests WHERE id = ?').bind(id).first()
+  if (req && req.employee_email) {
+    const statusText = status === 'approved' ? 'אושרה' : 'נדחתה';
     const emailBody = `
-      <div dir="rtl" style="font-family: Arial, sans-serif;">
-        <h2>עדכון סטטוס בקשת חופשה 📅</h2>
-        <p>שלום ${reqInfo.employee_name},</p>
-        <p>בקשת החופשה שלך לתאריכים ${reqInfo.start_date} עד ${reqInfo.end_date} <strong>${statusHebrew}</strong>.</p>
-        <p>בברכה,</p>
-        <p>המועצה הדתית</p>
-      </div>
-    `
-    await sendEmail(reqInfo.employee_email as string, `עדכון בקשת חופשה - ${statusHebrew}`, emailBody)
+שלום ${req.employee_name},
+
+בקשת החופשה שלך לתאריכים ${req.start_date} - ${req.end_date} ${statusText} על ידי המנהל.
+
+בברכה,
+מערכת ניהול חופשות - המועצה הדתית עכו
+    `.trim()
+    await sendEmail(req.employee_email as string, `עדכון סטטוס בקשת חופשה: ${statusText}`, emailBody)
   }
     
   return c.json({ success: true })
@@ -170,18 +237,19 @@ app.delete('/requests/:id', async (c) => {
 
 // --- ANNOUNCEMENTS ---
 app.get('/announcements', async (c) => {
-  const { results } = await c.env.DB.prepare('SELECT * FROM vacation_announcements ORDER BY created_at DESC').all()
+  const { results } = await c.env.DB.prepare('SELECT * FROM announcements ORDER BY created_at DESC').all()
   return c.json(results)
 })
 
 app.post('/announcements', async (c) => {
   const body = await c.req.json()
   const id = crypto.randomUUID()
+  const now = new Date().toISOString()
   
   await c.env.DB.prepare(
-    'INSERT INTO vacation_announcements (id, title, content) VALUES (?, ?, ?)'
+    'INSERT INTO announcements (id, title, content, created_at) VALUES (?, ?, ?, ?)'
   )
-    .bind(id, body.title, body.content)
+    .bind(id, body.title, body.content, now)
     .run()
     
   return c.json({ success: true, id })
@@ -189,7 +257,7 @@ app.post('/announcements', async (c) => {
 
 app.delete('/announcements/:id', async (c) => {
   const id = c.req.param('id')
-  await c.env.DB.prepare('DELETE FROM vacation_announcements WHERE id = ?').bind(id).run()
+  await c.env.DB.prepare('DELETE FROM announcements WHERE id = ?').bind(id).run()
   return c.json({ success: true })
 })
 
