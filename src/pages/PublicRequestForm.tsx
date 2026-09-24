@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { useStore } from '../lib/store';
 import SignatureCanvas from 'react-signature-canvas';
 import { getBusinessDaysCount, isJewishHoliday } from '../lib/utils';
@@ -15,10 +15,20 @@ export function PublicRequestForm() {
   const requests = useStore((state) => state.requests);
   const announcements = useStore((state) => state.announcements);
   const users = useStore((state) => state.users);
+  const currentUser = useStore((state) => state.currentUser);
   
-  const [employeeName, setEmployeeName] = useState('');
-  const [employeeId, setEmployeeId] = useState('');
-  const [employeeEmail, setEmployeeEmail] = useState('');
+  const [employeeName, setEmployeeName] = useState(currentUser?.name || '');
+  const [employeeId, setEmployeeId] = useState(currentUser?.username || '');
+  const [employeeEmail, setEmployeeEmail] = useState(currentUser?.email || '');
+  
+  useEffect(() => {
+    if (currentUser) {
+      setEmployeeName(currentUser.name);
+      setEmployeeId(currentUser.username);
+      setEmployeeEmail(currentUser.email || '');
+    }
+  }, [currentUser]);
+
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -231,12 +241,13 @@ export function PublicRequestForm() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">שם מלא</label>
                 <select
                   required
+                  disabled={!!currentUser}
                   value={employeeName}
                   onChange={(e) => setEmployeeName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
                 >
                   <option value="" disabled>-- בחר עובד --</option>
-                  {users.filter(u => u.role !== 'admin').map(user => (
+                  {users.filter(u => u.role !== 'admin' || (currentUser && u.username === currentUser.username)).map(user => (
                     <option key={user.id} value={user.name}>{user.name}</option>
                   ))}
                 </select>
@@ -246,11 +257,12 @@ export function PublicRequestForm() {
                 <input
                   type="text"
                   required
+                  disabled={!!currentUser}
                   pattern="[0-9]*"
                   placeholder="123456789"
                   value={employeeId}
                   onChange={(e) => setEmployeeId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
                 />
               </div>
               <div className="md:col-span-2">
@@ -258,10 +270,11 @@ export function PublicRequestForm() {
                 <input
                   type="email"
                   required
+                  disabled={!!currentUser}
                   placeholder="employee@example.com"
                   value={employeeEmail}
                   onChange={(e) => setEmployeeEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
