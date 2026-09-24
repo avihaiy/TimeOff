@@ -73,7 +73,12 @@ export function AdminStats() {
   }, [approvedRequestsThisYear, users]);
 
   if (approvedRequestsThisYear.length === 0) {
-    return null; // Don't show stats if there's no data
+    return (
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center mb-8">
+        <h3 className="text-lg font-bold text-gray-900 mb-2">סטטיסטיקות וגרפים</h3>
+        <p className="text-gray-500">יופיעו כאן ברגע שיאושרו בקשות חופשה בשנה הנוכחית ({currentYear})</p>
+      </div>
+    );
   }
 
   return (
