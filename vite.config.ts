@@ -33,4 +33,15 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom', 'zustand'],
+          calendar: ['react-day-picker', 'date-fns', '@hebcal/core'],
+          utils: ['framer-motion', 'lucide-react', 'react-hot-toast']
+        }
+      }
+    }
+  }
 })
