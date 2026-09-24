@@ -162,7 +162,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </nav>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-12">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -171,6 +171,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </motion.div>
       </main>
+      <footer className="w-full text-center py-4 text-sm text-gray-500 dark:text-gray-400 mt-auto border-t border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm fixed bottom-0">
+        המערכת נבנתה ע"י Avihai yosipovich © {new Date().getFullYear()}
+      </footer>
     </div>
   );
 }
