@@ -18,13 +18,12 @@ export function PublicRequestForm() {
   const currentUser = useStore((state) => state.currentUser);
   
   const [employeeName, setEmployeeName] = useState(currentUser?.name || '');
-  const [employeeId, setEmployeeId] = useState(currentUser?.username || '');
+  const [employeeId, setEmployeeId] = useState('');
   const [employeeEmail, setEmployeeEmail] = useState(currentUser?.email || '');
   
   useEffect(() => {
     if (currentUser) {
       setEmployeeName(currentUser.name);
-      setEmployeeId(currentUser.username);
       setEmployeeEmail(currentUser.email || '');
     }
   }, [currentUser]);
@@ -257,12 +256,11 @@ export function PublicRequestForm() {
                 <input
                   type="text"
                   required
-                  disabled={!!currentUser}
                   pattern="[0-9]*"
                   placeholder="123456789"
                   value={employeeId}
                   onChange={(e) => setEmployeeId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
                 />
               </div>
               <div className="md:col-span-2">
