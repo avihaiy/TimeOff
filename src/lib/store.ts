@@ -37,10 +37,11 @@ interface AppState {
   requests: VacationRequest[];
   announcements: Announcement[];
   currentUser: User | null;
+  token: string | null;
   isLoading: boolean;
   
   fetchInitialData: () => Promise<void>;
-  login: (username: string) => void;
+  login: (username: string, password?: string) => Promise<boolean>;
   logout: () => void;
   addUser: (name: string, username: string, password: string | undefined, role: Role, annualQuota: number, email?: string) => Promise<void>;
   addUsersBatch: (users: {name: string, username: string, annualQuota: number}[]) => Promise<void>;
@@ -92,11 +93,28 @@ const getInitialUser = (): User | null => {
   return null;
 };
 
+const getInitialToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('vacation_token') || null;
+  }
+  return null;
+};
+
+const apiFetch = async (url: string, options: RequestInit = {}) => {
+  const token = useStore.getState().token;
+  const headers = new Headers(options.headers || {});
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  return fetch(`${API_URL}${url}`, { ...options, headers });
+};
+
 export const useStore = create<AppState>()((set) => ({
   users: [],
   requests: [],
   announcements: [],
   currentUser: getInitialUser(),
+  token: getInitialToken(),
   isLoading: true,
 
   fetchInitialData: async () => {
@@ -109,9 +127,9 @@ export const useStore = create<AppState>()((set) => ({
 
     try {
       const [usersRes, requestsRes, annRes] = await Promise.all([
-        fetch(`${API_URL}/users`),
-        fetch(`${API_URL}/requests`),
-        fetch(`${API_URL}/announcements`)
+        apiFetch(`/users`),
+        apiFetch(`/requests`),
+        apiFetch(`/announcements`)
       ]);
 
       clearTimeout(fallbackTimer);
@@ -137,23 +155,37 @@ export const useStore = create<AppState>()((set) => ({
     }
   },
 
-  login: (username) =>
-    set((state) => {
-      const user = state.users.find((u) => u.username === username);
-      if (user) {
-        localStorage.setItem('vacation_currentUser', JSON.stringify(user));
+  login: async (username, password) => {
+    try {
+      const res = await apiFetch(`/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Login failed');
       }
-      return { currentUser: user || null };
-    }),
+      const data = await res.json();
+      localStorage.setItem('vacation_currentUser', JSON.stringify(data.user));
+      localStorage.setItem('vacation_token', data.token);
+      set({ currentUser: data.user, token: data.token });
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  },
 
   logout: () => {
     localStorage.removeItem('vacation_currentUser');
-    set({ currentUser: null });
+    localStorage.removeItem('vacation_token');
+    set({ currentUser: null, token: null });
   },
 
   addUser: async (name, username, password, role, annualQuota, email) => {
     try {
-      const res = await fetch(`${API_URL}/users`, {
+      const res = await apiFetch(`/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, username, password, role, annualQuota, email })
@@ -182,7 +214,7 @@ export const useStore = create<AppState>()((set) => ({
       // API currently handles one by one, we can just map POST requests for now
       // Or we can add a batch endpoint later
       const promises = newUsers.map(u => 
-        fetch(`${API_URL}/users`, {
+        apiFetch(`/users`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -198,7 +230,7 @@ export const useStore = create<AppState>()((set) => ({
       await Promise.all(promises);
       
       // Re-fetch all data to be safe
-      const res = await fetch(`${API_URL}/users`);
+      const res = await apiFetch(`/users`);
       const usersData = await res.json();
       
       set({ users: usersData.map(mapUser) });
@@ -210,7 +242,7 @@ export const useStore = create<AppState>()((set) => ({
 
   updateUserPassword: async (userId, newPassword) => {
     try {
-      await fetch(`${API_URL}/users/${userId}`, {
+      await apiFetch(`/users/${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: newPassword })
@@ -229,7 +261,7 @@ export const useStore = create<AppState>()((set) => ({
 
   updateUser: async (userId, updates) => {
     try {
-      await fetch(`${API_URL}/users/${userId}`, {
+      await apiFetch(`/users/${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
@@ -248,7 +280,7 @@ export const useStore = create<AppState>()((set) => ({
 
   deleteUser: async (userId) => {
     try {
-      await fetch(`${API_URL}/users/${userId}`, {
+      await apiFetch(`/users/${userId}`, {
         method: 'DELETE'
       });
       
@@ -263,7 +295,7 @@ export const useStore = create<AppState>()((set) => ({
 
   addRequest: async (userId, employeeName, employeeId, startDate, endDate, signature, employeeEmail) => {
     try {
-      const res = await fetch(`${API_URL}/requests`, {
+      const res = await apiFetch(`/requests`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -301,7 +333,7 @@ export const useStore = create<AppState>()((set) => ({
 
   updateRequestStatus: async (requestId, status) => {
     try {
-      await fetch(`${API_URL}/requests/${requestId}/status`, {
+      await apiFetch(`/requests/${requestId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -320,7 +352,7 @@ export const useStore = create<AppState>()((set) => ({
 
   deleteRequest: async (requestId) => {
     try {
-      await fetch(`${API_URL}/requests/${requestId}`, {
+      await apiFetch(`/requests/${requestId}`, {
         method: 'DELETE'
       });
       
@@ -335,7 +367,7 @@ export const useStore = create<AppState>()((set) => ({
 
   addAnnouncement: async (title, content) => {
     try {
-      const res = await fetch(`${API_URL}/announcements`, {
+      const res = await apiFetch(`/announcements`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, content })
@@ -361,7 +393,7 @@ export const useStore = create<AppState>()((set) => ({
 
   deleteAnnouncement: async (id) => {
     try {
-      await fetch(`${API_URL}/announcements/${id}`, {
+      await apiFetch(`/announcements/${id}`, {
         method: 'DELETE'
       });
       

@@ -9,25 +9,24 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const login = useStore((state) => state.login);
-  const users = useStore((state) => state.users);
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const user = users.find(u => u.username === username);
-    if (!user) {
-      setError('שם משתמש לא נמצא');
-      return;
+    try {
+      const success = await login(username, password);
+      if (success) {
+        // Find user role from store because login populated currentUser
+        const user = useStore.getState().currentUser;
+        if (user) {
+          navigate(user.role === 'admin' ? '/admin' : '/employee');
+        }
+      } else {
+        setError('שם משתמש או סיסמה שגויים');
+      }
+    } catch (err: any) {
+      setError(err.message || 'שגיאת התחברות');
     }
-    
-    // Default mock check, some users might not have a password if they were created before this update
-    if (user.password && user.password !== password) {
-      setError('סיסמה שגויה');
-      return;
-    }
-
-    login(username);
-    navigate(user.role === 'admin' ? '/admin' : '/employee');
   };
 
   return (
